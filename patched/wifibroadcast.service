@@ -1,0 +1,18 @@
+# This is a mostly empty service, but allows commands like stop, start, reload
+# to propagate to all wifibroadcast@ service instances.
+
+[Unit]
+Description=Wifibroadcast server
+After=multi-user.target
+
+[Service]
+Type=idle
+#Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/bin/sleep 2
+ExecStart=/home/pprz/Projects/compagnon-software/patched/wfb_on.sh
+ExecReload=/home/pprz/Projects/compagnon-software/patched/wfb_on.sh
+ExecStop=/home/pprz/Projects/compagnon-software/scripts/wfb_off.sh
+
+[Install]
+WantedBy=multi-user.target
