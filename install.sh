@@ -49,7 +49,7 @@ else
   make
   sudo make install
 fi  
-cd $PROJ/wifibroadcast
+cd $PROJ/wfb-ng
 sudo apt-get install -y libpcap-dev libsodium-dev
 make all_bin
 #make gs.key
