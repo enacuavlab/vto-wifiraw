@@ -6,12 +6,12 @@ Tested on Raspbian, Ubuntu/Debian and Nvidia Jetpack.
 mkdir ~/Projects  
 cd ~/Projects  
 git clone --recurse-submodules https://github.com/enacuavlab/vto-wifiraw.git  
-cd vto-wifimonitorinject 
+cd vto-wifiraw
 ./install.sh  
 
-compagnon-software/patched/wfb_on.sh (set air or ground)  
+vto-wifiraw/patched/wfb_on.sh (set air or ground)  
 
-copy compagnon-software/wifibroadcast drone.key gs.key  
+copy vto-wifiraw/wifibroadcast drone.key gs.key  
 
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
