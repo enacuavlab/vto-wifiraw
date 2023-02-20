@@ -1,4 +1,4 @@
-# compagnon-software
+# vto-wifiraw
 
 This project provides the wireless interface for ground and board systems.  
 Tested on Raspbian, Ubuntu/Debian and Nvidia Jetpack.  
