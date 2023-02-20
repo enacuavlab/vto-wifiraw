@@ -5,7 +5,7 @@ Tested on Raspbian, Ubuntu/Debian and Nvidia Jetpack.
 
 mkdir ~/Projects  
 cd ~/Projects  
-git clone --recurse-submodules https://github.com/enacuavlab/vto-wifimonitorinject.git  
+git clone --recurse-submodules https://github.com/enacuavlab/vto-wifiraw.git  
 cd vto-wifimonitorinject 
 ./install.sh  
 
