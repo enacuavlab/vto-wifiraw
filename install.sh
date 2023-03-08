@@ -51,7 +51,7 @@ else
 fi  
 cd $PROJ/wifibroadcast
 sudo apt-get install -y libpcap-dev libsodium-dev
-make all_bin
+make all
 #make gs.key
 rm -Rf $PROJ/patched
 mkdir $PROJ/patched
