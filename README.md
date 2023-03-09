@@ -15,6 +15,8 @@ copy vto-wifiraw/wifibroadcast drone.key gs.key
 
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
+2023-02-21-raspios-bullseye-arm64-lite, Raspberry PI3: Ground
+
 Debian 11.3 (bulleyes) arm64 on Raspberry PI4,3,0V2: Board and Ground
  
 Ubuntu 20.04 (server+desktop) arm64 on Raspberry PI4 : Ground with Paparazzi 
