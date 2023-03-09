@@ -75,4 +75,4 @@ if ls $DEVICES 1> /dev/null 2>&1; then
   done
 fi
 
-$HOME_PRJ/scripts/wfb_off.sh
+$HOME_PRJ/scripts/wfb_off.sh 1
