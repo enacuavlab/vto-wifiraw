@@ -6,7 +6,7 @@ Tested on Raspbian, Ubuntu/Debian and Nvidia Jetpack.
 mkdir ~/Projects  
 cd ~/Projects  
 git clone --recurse-submodules https://github.com/enacuavlab/vto-wifiraw.git  
-cd vto-wifiraw
+cd vto-wifiraw  
 ./install.sh  
 
 vto-wifiraw/patched/wfb_on.sh (set air or ground)  
