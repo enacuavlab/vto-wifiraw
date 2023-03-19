@@ -9,7 +9,7 @@ git clone --recurse-submodules https://github.com/enacuavlab/vto-wifiraw.git
 cd vto-wifiraw  
 ./install.sh  
 
-vto-wifiraw/patched/wfb_on.sh (set air or ground)  
+vto-wifiraw/patched/wfb_on.sh (set air or ground : 2 modifications)  
 
 copy vto-wifiraw/wifibroadcast drone.key gs.key  
 
