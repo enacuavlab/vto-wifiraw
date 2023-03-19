@@ -14,7 +14,9 @@ vto-wifiraw/patched/wfb_on.sh (set air or ground : 2 modifications)
 copy vto-wifiraw/wifibroadcast drone.key gs.key  
 
 ---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 pre-conditions : uefi secure boot must be disabled to install patched rtl8812 driver
+---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 2023-02-21-raspios-bullseye-arm64-lite, Raspberry PI3: Ground
 
