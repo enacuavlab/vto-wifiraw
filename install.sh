@@ -63,9 +63,9 @@ sed -i 's|compagnonsoftwarepath|'"$PROJ"'|g' $PROJ/patched/air.sh
 sed -i 's|compagnonsoftwarepath|'"$PROJ"'|g' $PROJ/patched/ground.sh
 sed -i 's|compagnonsoftwarepath|'"$PROJ"'|g' $PROJ/patched/wfb_on.sh
 sed -i 's|compagnonsoftwarepath|'"$PROJ"'|g' $PROJ/patched/wifibroadcast.service
-sudo cp $PROJ/material/rtl8812au.conf /etc/modprobe.d
+sudo cp $PROJ/material/8812au.conf /etc/modprobe.d
 if ! uname -a | grep -cs "4.9.201-tegra"> /dev/null 2>&1; 
-  then sudo sh -c "echo 'options 88XXau rtw_switch_usb_mode=1' >> /etc/modprobe.d/rtl8812au.conf"; fi
+  then sudo sh -c "echo 'options 88XXau rtw_switch_usb_mode=1' >> /etc/modprobe.d/8812au.conf"; fi
 sudo cp $PROJ/patched/wifibroadcast.service /etc/systemd/system
 sudo cp $PROJ/material/60-wifibroadcast.rules /etc/udev/rules.d
 sudo udevadm control --reload-rules
