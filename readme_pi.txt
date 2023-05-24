@@ -7,7 +7,7 @@ PI4
 2022-09-22-raspios-bullseye-arm64-lite.img.xz
 (uname -a 
 OK : Linux raspberrypi 5.15.61-v8+ #1579 SMP PREEMPT Fri Aug 26 11:16:44 BST 2022 aarch64 GNU/Linux
-KO : Linux raspberrypi 6.1.21-v8+ #1642 SMP PREEMPT Mon Apr  3 17:24:16 BST 2023 aarch64 GNU/Linux)
+OK : Linux raspberrypi 6.1.21-v8+ #1642 SMP PREEMPT Mon Apr  3 17:24:16 BST 2023 aarch64 GNU/Linux)
 
 (wget https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2022-09-26/2022-09-22-raspios-bullseye-arm64-lite.img.xz)
 (unxz 2022-09-22-raspios-bullseye-arm64-lite.img.xz)
@@ -85,3 +85,10 @@ sudo apt-get install gstreamer1.0-plugins-bad -y;\
 sudo apt-get install gstreamer1.0-plugins-ugly -y;\
 sudo apt-get install gstreamer1.0-plugins-base -y;\
 
+sudo apt-get install gstreamer1.0-tools gstreamer1.0-alsa \
+     gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+     gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
+     gstreamer1.0-libav
+sudo apt-get install libgstreamer1.0-dev \
+     libgstreamer-plugins-base1.0-dev \
+     libgstreamer-plugins-bad1.0-dev
