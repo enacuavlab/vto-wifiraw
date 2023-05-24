@@ -1,6 +1,7 @@
 PI flash & headless configure
 -----------------------------
-(sudo apt install rpi-imager)
+(sudo apt install rpi-imager
+or custom conf below)
 
 PI4
 2022-09-22-raspios-bullseye-arm64-lite.img.xz
@@ -75,6 +76,7 @@ sudo systemctl disable hciuart
 
 sudo apt update && sudo apt upgrade -y
 
+sudo apt-get install git -y,\
 sudo apt-get install gstreamer1.0-plugins-good -y;\
 sudo apt-get install gstreamer1.0-plugins-bad -y;\
 sudo apt-get install gstreamer1.0-plugins-ugly -y;\
