@@ -2,9 +2,12 @@ PI flash & headless configure
 -----------------------------
 PI4
 2022-09-22-raspios-bullseye-arm64-lite.img.xz
+
 (wget https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2022-09-26/2022-09-22-raspios-bullseye-arm64-lite.img.xz)
 (unxz 2022-09-22-raspios-bullseye-arm64-lite.img.xz)
 (dd if=2022-09-22-raspios-bullseye-arm64-lite.img of=/dev/sdf bs=4M status=progress)
+(partprobe /dev/sdf)
+(mount /dev/sdc1 /mnt)
 
 PI3
 2023-02-21-raspios-bullseye-arm64-lite.img.xz
@@ -45,6 +48,18 @@ fallback static_eth0
 "
 
 -------------------------------------------------------------------------------------------
+/boot/userconf
+
+username:password-hash
+
+echo "pprz" | openssl passwd -6 -stdin
+pi:$6$38HiUnL.... 
+
+(echo -n pi: ; echo 'pprz' | openssl passwd -6 -stdin) | sudo tee userconf)
+
+-------------------------------------------------------------------------------------------
+Post setup
+-----------
 /boot/config.txt
 dtoverlay=pi3-disable-bt
 
@@ -56,18 +71,6 @@ sudo systemctl disable serial-getty@ttyAMA0.service
 sudo systemctl stop hciuart
 sudo systemctl disable hciuart
 
--------------------------------------------------------------------------------------------
-/boot/userconf
-
-username:password-hash
-
-echo "pprz" | openssl passwd -6 -stdin
-pi:$6$38HiUnL.... 
-
-
--------------------------------------------------------------------------------------------
-Post setup
------------
 sudo apt update && sudo apt upgrade -y
 
 sudo apt-get install gstreamer1.0-plugins-good -y;\
