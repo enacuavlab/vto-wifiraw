@@ -1,5 +1,7 @@
 PI flash & headless configure
 -----------------------------
+(sudo apt install rpi-imager)
+
 PI4
 2022-09-22-raspios-bullseye-arm64-lite.img.xz
 
