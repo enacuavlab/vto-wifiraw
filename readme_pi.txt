@@ -5,6 +5,8 @@ or custom conf below)
 
 PI4
 2022-09-22-raspios-bullseye-arm64-lite.img.xz
+(uname -a 
+Linux raspberrypi 6.1.21-v8+ #1642 SMP PREEMPT Mon Apr  3 17:24:16 BST 2023 aarch64 GNU/Linux)
 
 (wget https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2022-09-26/2022-09-22-raspios-bullseye-arm64-lite.img.xz)
 (unxz 2022-09-22-raspios-bullseye-arm64-lite.img.xz)
