@@ -18,6 +18,9 @@ OK : Linux raspberrypi 6.1.21-v8+ #1642 SMP PREEMPT Mon Apr  3 17:24:16 BST 2023
 PI3
 2023-02-21-raspios-bullseye-arm64-lite.img.xz
 
+PI0.2
+2023-05-03-raspios-bullseye-arm64-lite.img.xz
+
 -------------------------------------------------------------------------------------------
 cd /media/.../boot
 sudo touch ssh
@@ -62,6 +65,11 @@ echo "pprz" | openssl passwd -6 -stdin
 pi:$6$38HiUnL.... 
 
 (echo -n pi: ; echo 'pprz' | openssl passwd -6 -stdin) | sudo tee userconf)
+
+-------------------------------------------------------------------------------------------
+Connect
+sudo nmap -sn 192.168.1.1/24
+ssh pi@...
 
 -------------------------------------------------------------------------------------------
 Post setup
