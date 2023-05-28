@@ -20,6 +20,8 @@ PI3
 
 PI0.2
 2023-05-03-raspios-bullseye-arm64-lite.img.xz
+(uname -a
+Linux raspberrypi 6.1.21-v8+ #1642 SMP PREEMPT Mon Apr  3 17:24:16 BST 2023 aarch64 GNU/Linux)
 
 -------------------------------------------------------------------------------------------
 cd /media/.../boot
@@ -87,7 +89,7 @@ sudo systemctl disable hciuart
 
 sudo apt update && sudo apt upgrade -y
 
-sudo apt-get install git -y,\
+sudo apt-get install git -y;\
 sudo apt-get install gstreamer1.0-plugins-good -y;\
 sudo apt-get install gstreamer1.0-plugins-bad -y;\
 sudo apt-get install gstreamer1.0-plugins-ugly -y;\
