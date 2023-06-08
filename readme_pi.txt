@@ -77,15 +77,19 @@ ssh pi@...
 Post setup
 -----------
 /boot/config.txt
-dtoverlay=pi3-disable-bt
+#Disable onboard Bluetooth on Pi 3B, 3B+, 3A+, 4B and Zero W, restoring UART0/ttyAMA0 over GPIOs 14 (pin 8) & 15 (pin10). 
+dtoverlay=disable-bt
+
+sudo systemctl disable hciuart.service
+sudo systemctl disable bluealsa.service
+sudo systemctl disable bluetooth.service
 
 sudo reboot
 
-sudo systemctl stop serial-getty@ttyAMA0.service
-sudo systemctl disable serial-getty@ttyAMA0.service
-
-sudo systemctl stop hciuart
-sudo systemctl disable hciuart
+# sudo systemctl stop serial-getty@ttyAMA0.service
+# sudo systemctl disable serial-getty@ttyAMA0.service
+# sudo systemctl stop hciuart
+# sudo systemctl disable hciuart
 
 sudo apt update && sudo apt upgrade -y
 
