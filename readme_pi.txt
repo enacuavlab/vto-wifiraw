@@ -106,3 +106,6 @@ sudo apt-get install gstreamer1.0-tools gstreamer1.0-alsa \
 sudo apt-get install libgstreamer1.0-dev \
      libgstreamer-plugins-base1.0-dev \
      libgstreamer-plugins-bad1.0-dev
+
+-----------
+sudo pip3 install pyserial
