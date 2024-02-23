@@ -6,7 +6,7 @@ Two wireless devices on both sides may improve communication.
 git clone --recurse-submodules  http://github.com/enacuavlab/vto-wifiraw.git
 (git clone --recurse-submodules  git@github.com:enacuavlab/vto-wifiraw.git)
 
-Needed: Internet connection and sudo 
+Installation need internet connection and sudo 
 
 ./install.sh
 or
