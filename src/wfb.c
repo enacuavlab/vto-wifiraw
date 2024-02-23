@@ -21,9 +21,9 @@
 int main(int argc, char **argv) {
 
   FILE *tempstream=fopen("/sys/class/thermal/thermal_zone0/temp","rb");
-  bool switchonce=true,inverted=false;
+  bool switchonce=true,inverted=false,backuprefresh=true,backuponce=true;
   int8_t cptmain=-1,cptbackup=-1,cpttmp=-1;
-  uint8_t raw0_cptfreq=0,raw1_cptfreq=31;
+  uint8_t raw0_cptfreq=0,raw1_cptfreq=18;
   uint8_t cptfdstart=0,listenflag=0;
   wfb_utils_t dev[2];
   if (wfb_utils_init(&dev[1])) { // RAW1_FD
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
   uint8_t delay_s=(delay_n / 1000000000L);
   uint64_t stp_n=0,stp_n1=0,stp_n2=0,delaytot_n=0;
 
-  bool debugonce=false;
+  bool debugonce=true;
 
   for(;;) {
     FD_ZERO(&readset);
@@ -211,6 +211,7 @@ int main(int argc, char **argv) {
 		        listenflag=2;
 		      }
                     } // end if (cptmain<0)
+		      
                     if ((cptmain>=0)&&(cptbackup>=0)&&((((wfbdown_t *)ptr)->mainchan)==true)) {
 		      if (cpt==cptbackup) {
   		        if ((((wfbdown_t *)ptr)->backupchan)<0) {
@@ -227,6 +228,23 @@ int main(int argc, char **argv) {
                         dev[cptbackup].unlockfreq=false;
 		        dev[cptbackup].freqcptcur=(((wfbdown_t *)ptr)->backupchan);
                         wfb_utils_setfreq(dev[cptbackup].freqcptcur,&dev[cptbackup]);
+		      }
+		    }
+
+                    if ((cptmain>=0)&&(cptbackup>=0)&&((((wfbdown_t *)ptr)->mainchan)==true)) {
+                      if ((backuprefresh)&&((((wfbdown_t *)ptr)->backupchan)==-3)) {
+		        backuprefresh=false;
+//			listenflag=cptmain;
+			printf("REFRESHING\n");
+		      }
+                      if ((backuponce)&&(!backuprefresh)&&((((wfbdown_t *)ptr)->backupchan)>=0)) {
+                        backuponce=false;
+                        backuprefresh=true;
+//			listenflag=2;
+                        dev[cptbackup].unlockfreq=false;
+		        dev[cptbackup].freqcptcur=(((wfbdown_t *)ptr)->backupchan);
+                        wfb_utils_setfreq(dev[cptbackup].freqcptcur,&dev[cptbackup]);
+                        printf("REFRESHED\n");
 		      }
 		    }
 		  }
@@ -248,7 +266,8 @@ int main(int argc, char **argv) {
 	  stp_n2 = stp_n1;
 #if ROLE
 // DEBUG CODE
-          if ((debugonce)&&(cptbackup>=0)&&(timetosend)) {printf("(%d)\n",dev[cptmain].fails++);}
+          if ((debugonce)&&(cptbackup>=0)&&(timetosend)) 
+	    printf("(%d)(%d)(%d)(%d)(%d)\n",cptmain,cptbackup,dev[cptmain].freqcptcur,dev[cptbackup].freqcptcur,dev[cptbackup].fails++);
 // END DEBUG CODE
           if ((cptbackup>=0)&&(timetosend)) {
 	    if (dev[cptmain].fails>60) {
@@ -264,7 +283,10 @@ int main(int argc, char **argv) {
 	      cptbackup=-1;
 	    }
 	    if ((debugonce)&&(dev[cptbackup].fails>60)) {
-	      debugonce=false;
+	      dev[cptmain].wfbdown.backupchan=-3;
+              dev[cptbackup].sync_active = false;
+              dev[cptbackup].unlockfreq = true;
+	      cptbackup=-1;
 	      // TODO
 	    }
 // DEBUG CODE
