@@ -2,17 +2,11 @@
 STR="-------------------------------------------------------------------------\n"
 STR+="This script will setup the communication system \n"
 STR+="It must be run on ground and board sides \n\n"
-STR+="After the installation copy the encryption keys (drone.key, gs.key) from the \n"
-STR+="directory compagnon-software/wifiboradcast to have the same on both sides \n\n"
-STR+="Turn off the genuine wifi before starting the system from a desktop \n"
 STR+="The system, will start as soon as the USB dongle is inserted, or while booting \n"
 STR+="with an already inserted dongle \n\n"
 STR+="From the ground side you can check the communication (according the configuration):\n\n"
 STR+="ssh pprz@10.0.1.2 \n\n"
-STR+="or \n\n"
-STR+="gst-launch-1.0 udpsrc port=5700 ! application/x-rtp, encoding-name=H264,payload=96 "
-STR+="! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false \n\n"
-STR+="(sudo apt install -y gstreamer1.0-tools gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav)\n\n" 
+STR+="-------------------------------------------------------------------------\n"
 STR+="When using a Virtual machine for the installation, make sure you set \n"
 STR+="Virtual Machine Setting / Hardware / USB Controller / USB compatibility USB 3.1 \n\n"
 STR+="-------------------------------------------------------------------------\n"
@@ -25,11 +19,10 @@ if [ ! $ANSWER = "y" ] || [ -z $ANSWER ]; then exit -1; fi
 if ! groups | grep -q 'sudo'; then exit -1; fi
 sudo apt-get install -y socat git net-tools wireless-tools rfkill v4l-utils
 cd $PROJ/rtl8812au
+if uname -a | grep -cs "4.9.253-tegra"> /dev/null 2>&1;then git checkout 4ab079f7; fi
 git apply ../material/rtl8812au_v5.6.4.2.patch
 DKMS=false
 if uname -a | grep -cs "Ubuntu"> /dev/null 2>&1;then DKMS=true; fi
-if uname -a | grep -cs "4\.9\.201-tegra"> /dev/null 2>&1;then DKMS=true; fi
-if uname -a | grep -cs "4\.9\.140"> /dev/null 2>&1;then DKMS=true; fi
 if uname -a | grep -cs "4.9.253-tegra"> /dev/null 2>&1;then DKMS=true; fi
 if $DKMS; then
   echo "blacklist rtl8812au" |sudo tee -a /etc/modprobe.d/blacklist.conf > /dev/null 2>&1
@@ -45,33 +38,26 @@ else
     sed -i 's/CONFIG_PLATFORM_I386_PC = y/CONFIG_PLATFORM_I386_PC = n/g' Makefile
     sed -i 's/CONFIG_PLATFORM_ARM_RPI = n/CONFIG_PLATFORM_ARM_RPI = y/g' Makefile
   fi
-  sudo apt-get install linux-headers
+  if uname -r | grep -cs "5.15.61-v8+"; then
+    wget https://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-firmware/raspberrypi-kernel-headers_1.20220830-1_arm64.deb
+    sudo apt-get install ./raspberrypi-kernel-headers_1.20220830-1_arm64.deb
+  else
+    sudo apt-get install linux-headers
+  fi
   make
   sudo make install
 fi  
-cd $PROJ/wifibroadcast
-sudo apt-get install -y libpcap-dev libsodium-dev
-make all
-#make gs.key
-rm -Rf $PROJ/patched
-mkdir $PROJ/patched
-cp $PROJ/scripts/air.sh $PROJ/patched
-cp $PROJ/scripts/ground.sh $PROJ/patched
-cp $PROJ/scripts/wfb_on.sh $PROJ/patched
-cp $PROJ/scripts/wifibroadcast.service $PROJ/patched
-sed -i 's|compagnonsoftwarepath|'"$PROJ"'|g' $PROJ/patched/air.sh
-sed -i 's|compagnonsoftwarepath|'"$PROJ"'|g' $PROJ/patched/ground.sh
-sed -i 's|compagnonsoftwarepath|'"$PROJ"'|g' $PROJ/patched/wfb_on.sh
-sed -i 's|compagnonsoftwarepath|'"$PROJ"'|g' $PROJ/patched/wifibroadcast.service
-sudo cp $PROJ/material/8812au.conf /etc/modprobe.d
-if ! uname -a | grep -cs "4.9.201-tegra"> /dev/null 2>&1; 
-  then sudo sh -c "echo 'options 88XXau rtw_switch_usb_mode=1' >> /etc/modprobe.d/8812au.conf"; fi
-sudo cp $PROJ/patched/wifibroadcast.service /etc/systemd/system
-sudo cp $PROJ/material/60-wifibroadcast.rules /etc/udev/rules.d
-sudo udevadm control --reload-rules
-sudo systemctl enable wifibroadcast.service
-sudo systemctl start wifibroadcast.service
-sudo systemctl daemon-reload
-if ! $DKMS; then 
-  sudo sh -c "echo 'denyinterfaces wlan1' >> /etc/dhcpcd.conf"
+if uname -a | grep -cs "Ubuntu"> /dev/null 2>&1; then 
+  sudo cp $PROJ/material/wfb.conf /etc/NetworkManager/conf.d
+  sudo systemctl reload NetworkManager.service 
 fi
+sudo cp $PROJ/material/8812au.conf /etc/modprobe.d
+sudo cp $PROJ/material/60-wfb.rules /etc/udev/rules.d
+for f in $PROJ/material/wfb.service $PROJ/scripts/wfb_on.sh; do
+  sed -i 's#TOBEUPDATEATINSTALLATION#'$PROJ'#' ${f};
+  echo ${f};
+done;
+sudo cp $PROJ/material/wfb.service /etc/systemd/system
+sudo udevadm control --reload-rules
+sudo systemctl enable wfb.service
+sudo systemctl start wfb.service
