@@ -148,10 +148,13 @@ int main(int argc, char **argv) {
                 lensum -= (len + sizeof(subpayhdr_t));
                 ptr+=sizeof(subpayhdr_t);
 		if (cptmain>=0) {
-                  if(id==TUN_FD) {
-		    write(param.fd[id], ptr, len);
-		  } 
+#if ROLE
+	          if (id==TUN_FD) write(param.fd[id], ptr, len);
                   else lensum=0;
+#else
+	          if (id==TUN_FD) write(param.fd[TUN_FD], ptr, len);
+	          else len = sendto(param.fd[id],ptr,len,0,(struct sockaddr *)&(param.addr_out[id]), sizeof(struct sockaddr));
+#endif // ROLE
 		}
                 if (id==WFB_FD) {
 #if ROLE
