@@ -15,7 +15,7 @@ typedef struct {
 } __attribute__((packed)) subpayhdr_t;
 
 
-typedef enum { RAW0_FD, RAW1_FD, WFB_FD, TUN_FD, FD_NB } cannal_t;
+typedef enum { RAW0_FD, RAW1_FD, WFB_FD, TUN_FD, VID1_FD, FD_NB } cannal_t;
 
 typedef struct {
   char name[20];
@@ -218,6 +218,24 @@ bool wfb_init(char *raw0_name, char *raw1_name, init_t *param) {
   FD_SET(param->fd[dev], &(param->readset_all[1]));if (param->maxfd_all[1] < param->fd[dev]) param->maxfd_all[1]=param->fd[dev];
   FD_SET(param->fd[dev], &(param->readset_all[2]));if (param->maxfd_all[2] < param->fd[dev]) param->maxfd_all[2]=param->fd[dev];
 
+
+  dev=VID1_FD;   // Video (one unidirectional link)
+  if (-1 == (param->fd[dev]=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP))) exit(-1);
+#if ROLE
+  addr_in[dev].sin_family = AF_INET;
+  addr_in[dev].sin_port = htons(5600);
+  addr_in[dev].sin_addr.s_addr = inet_addr(ADDR_LOCAL);
+  if (-1 == bind(param->fd[dev], (struct sockaddr *)&addr_in[dev], sizeof(addr_in))) exit(-1);
+  FD_SET(param->fd[dev], &(param->readset_all[0]));if (param->maxfd_all[0] < param->fd[dev]) param->maxfd_all[0]=param->fd[dev];
+  FD_SET(param->fd[dev], &(param->readset_all[1]));if (param->maxfd_all[1] < param->fd[dev]) param->maxfd_all[1]=param->fd[dev];
+  FD_SET(param->fd[dev], &(param->readset_all[2]));if (param->maxfd_all[2] < param->fd[dev]) param->maxfd_all[2]=param->fd[dev];
+#else
+  param->addr_out[dev].sin_family = AF_INET;
+  param->addr_out[dev].sin_port = htons(5600);
+  param->addr_out[dev].sin_addr.s_addr = inet_addr(ADDR_LOCAL);
+#endif // ROLE
+       
+       
   return(ret);
 }
 
