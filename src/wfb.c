@@ -211,7 +211,6 @@ int main(int argc, char **argv) {
 		        listenflag=2;
 		      }
                     } // end if (cptmain<0)
-		      
                     if ((cptmain>=0)&&(cptbackup>=0)&&((((wfbdown_t *)ptr)->mainchan)==true)) {
 		      if (cpt==cptbackup) {
   		        if ((((wfbdown_t *)ptr)->backupchan)<0) {
@@ -230,7 +229,6 @@ int main(int argc, char **argv) {
                         wfb_utils_setfreq(dev[cptbackup].freqcptcur,&dev[cptbackup]);
 		      }
 		    }
-
                     if ((cptmain>=0)&&(cptbackup>=0)&&((((wfbdown_t *)ptr)->mainchan)==true)) {
                       if ((backuprefresh)&&((((wfbdown_t *)ptr)->backupchan)==-3)) {
 		        backuprefresh=false;
