@@ -3,7 +3,6 @@ This project provides wireless interface between ground and board systems.
 -------------------------------------------------------------------------------
 
 git clone --recurse-submodules  http://github.com/enacuavlab/vto-wifiraw.git
-This project provides wireless interface between ground and board systems.  
 git clone --recurse-submodules  https://github.com/enacuavlab/vto-wifiraw.git
 
 (git clone --recurse-submodules  git@github.com:enacuavlab/vto-wifiraw.git)
