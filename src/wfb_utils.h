@@ -14,12 +14,12 @@ typedef struct {
   int8_t chan;
   int8_t backupchan;
   bool mainchan;
-//  int8_t antdbm;
+  int8_t antdbm;
   uint16_t temp;
-//  uint32_t fails;
-  uint32_t drops;
+  uint32_t fails;
+//  uint32_t drops;
   uint32_t sent;
-  uint32_t rate;
+//  uint32_t rate;
 } __attribute__((packed)) wfbdown_t;
 
 typedef struct {

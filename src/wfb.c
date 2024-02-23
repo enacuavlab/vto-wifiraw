@@ -15,12 +15,15 @@
 #include "wfb_utils.h"
 #include "wfb.h"
 
-#define GET_TEMPERATURE fflush(tempstream);fseek(tempstream,0,SEEK_SET);fread(&strtmp,1,sizeof(strtmp),tempstream);wfbdown.temp = atoi(strtmp);
+#define GET_TEMPERATURE fflush(tempstream);fseek(tempstream,0,SEEK_SET);fread(&strtmp,1,sizeof(strtmp),tempstream);temperature = atoi(strtmp);
 
 /*****************************************************************************/
 int main(int argc, char **argv) {
 
   FILE *tempstream=fopen("/sys/class/thermal/thermal_zone0/temp","rb");
+  uint16_t temperature;
+  char strtmp[6];
+
   bool switchonce=true,inverted=false,backuprefresh=true,backuponce=true;
   int8_t cptmain=-1,cptbackup=-1,cpttmp=-1;
   uint8_t raw0_cptfreq=0,raw1_cptfreq=18;
@@ -169,7 +172,6 @@ int main(int argc, char **argv) {
 		      if(cptmain==0)cptbackup=1;else cptbackup=0;
                       dev[cptbackup].sync_active = true;
 		      printf("(%d)\n",cptmain);
-
 		  }
                   if (cptfdstart==0) {
                     if (cptmain<0) {
@@ -231,7 +233,6 @@ int main(int argc, char **argv) {
 			printf("INVERTED (%d)\n",listenflag);
 		      }
 		    }
-
                     if ((cptmain>=0)&&(cptbackup>=0)&&((((wfbdown_t *)ptr)->mainchan)==true)) {
                       if ((backuprefresh)&&((((wfbdown_t *)ptr)->backupchan)==-3)) {
 		        backuprefresh=false;
@@ -312,7 +313,11 @@ int main(int argc, char **argv) {
 		  dev[cptbackup].wfbdown.backupchan=dev[cptmain].freqcptcur;
 		}
 	        if (((rawcpt==cptbackup)&&(cptbackup>=0))||((rawcpt==cptmain)&&(cptmain>=0))){
+                  if (rawcpt==cptmain) GET_TEMPERATURE; 
+                  dev[rawcpt].wfbdown.temp=temperature;
+                  dev[rawcpt].wfbdown.antdbm=dev[rawcpt].antdbm;
                   dev[rawcpt].wfbdown.chan=dev[rawcpt].freqcptcur;
+                  dev[rawcpt].wfbdown.fails=dev[rawcpt].fails;
 		  memcpy(&onlinebuff[rawcpt][cpt][0]+(param.offsetraw)+sizeof(payhdr_t)+sizeof(subpayhdr_t), 
 			 &dev[rawcpt].wfbdown, sizeof(wfbdown_t));
 	          len = sizeof(wfbdown_t);
