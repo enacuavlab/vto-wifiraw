@@ -1,6 +1,6 @@
 This project provides wireless interface between ground and board systems.
 
-Two wireless devices on both sides may be use to improve communication.
+Two wireless devices on both sides may improve communication.
 
 -------------------------------------------------------------------------------
 git clone --recurse-submodules  http://github.com/enacuavlab/vto-wifiraw.git
