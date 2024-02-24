@@ -177,6 +177,7 @@ int main(int argc, char **argv) {
 		        lenlog=sprintf((char *)wfbmsg,"RADIO Lock Main dev(%d)chan(%d)\n",cptmain,dev[cptmain].freqcptcur);
 		        if ((((wfbdown_t *)ptr)->backupchan)>=0) {
 		          if(cptmain==0)cptbackup=1;else cptbackup=0;
+			  dev[cpttmp].sync_active = false; // if it was Waiting Backup
                           dev[cptbackup].unlockfreq=false;
                           dev[cptbackup].freqcptcur=(((wfbdown_t *)ptr)->backupchan);
 		          wfb_utils_setfreq(dev[cptbackup].freqcptcur,&dev[cptbackup]);
@@ -184,7 +185,8 @@ int main(int argc, char **argv) {
 		        } 
                         if ((((wfbdown_t *)ptr)->backupchan)==-1) {
                           listenflag=cptmain;
-			  dev[cptbackup].unlockfreq=false;
+			  if(cptmain==0)cpttmp=1;else cpttmp=0;
+                          dev[cpttmp].sync_active = true;
                           lentmp=sprintf((char *)wfbmsg+lenlog,"RADIO Waiting Backup from Main dev(%d)chan(%d)\n",cptmain,dev[cptmain].freqcptcur);lenlog+=lentmp;
 			}
                         if ((((wfbdown_t *)ptr)->backupchan)==-2) {
