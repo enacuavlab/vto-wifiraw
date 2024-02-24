@@ -13,17 +13,17 @@ or
 ./uninstall.sh
 
 -------------------------------------------------------------------------------
-Before first run compile the suitable executable file on BOARD and on GROUND
+Before first run, compile the suitable executable file on BOARD and on GROUND
 
 src/Makefile
-#ROLE := BOARD
+#ROLE := BOARD commented !
 ROLE := GROUND
 
 make
 
 src/Makefile
 ROLE := BOARD
-#ROLE := GROUND
+#ROLE := GROUND commented !
 
 make
 
