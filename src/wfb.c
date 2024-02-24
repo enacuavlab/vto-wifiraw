@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 
   uint16_t dst,src,seq_prev,seq;
   int ret;
-  ssize_t len,lensum;
+  ssize_t len,lensum,lentmp;
 
   // should be in dev struct
   ssize_t lentab[2][FD_NB];
@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
   uint64_t delay_n=1000000000L;
 #else
   uint64_t delay_n=2000000000L;
+  uint8_t wfbmsg[300];
 #endif  // ROLE
   uint8_t delay_s=(delay_n / 1000000000L);
   uint64_t stp_n=0,stp_n1=0,stp_n2=0,delaytot_n=0;
@@ -147,15 +148,7 @@ int main(int argc, char **argv) {
                 len = ((subpayhdr_t *)ptr)->len;
                 lensum -= (len + sizeof(subpayhdr_t));
                 ptr+=sizeof(subpayhdr_t);
-		if (cptmain>=0) {
-#if ROLE
-	          if (id==TUN_FD) write(param.fd[id], ptr, len);
-                  else lensum=0;
-#else
-	          if (id==TUN_FD) write(param.fd[TUN_FD], ptr, len);
-	          else len = sendto(param.fd[id],ptr,len,0,(struct sockaddr *)&(param.addr_out[id]), sizeof(struct sockaddr));
-#endif // ROLE
-		}
+
                 if (id==WFB_FD) {
 #if ROLE
 		  if (cptmain>=0) {
@@ -256,6 +249,36 @@ int main(int argc, char **argv) {
 		  }
 #endif // ROLE
                 }
+
+		if (cptmain>=0) {
+#if ROLE
+	          if (id==TUN_FD) write(param.fd[id], ptr, len);
+                  else lensum=0;
+#else
+                  if (id==WFB_FD) {
+		    memcpy(&dev[cpt].wfbdown,((wfbdown_t *)ptr),sizeof(wfbdown_t));
+		    if (cpt==cptmain) {
+		      ptr=wfbmsg;
+		      GET_TEMPERATURE;
+		      len=sprintf((char *)wfbmsg,"MAIN temp(%d) chan(%d) dbm(%d) sent(%d) fails(%d) <> temp(%d) chan(%d) dbm(%d) sent(%d) fails(%d)\n",
+			dev[cptmain].wfbdown.temp,dev[cptmain].wfbdown.chan,dev[cptmain].wfbdown.antdbm,dev[cptmain].wfbdown.sent,dev[cptmain].wfbdown.fails,
+			temperature,dev[cptmain].freqcptcur,dev[cptmain].antdbm,dev[cptmain].seq_out,dev[cptmain].fails);
+		      if (cptbackup>0) {
+		        lentmp=sprintf((char *)wfbmsg+len-1,"  BACK chan(%d) dbm(%d) sent(%d) fails(%d) <> chan(%d) dbm(%d) sent(%d) fails(%d)\n",
+		  	  dev[cptbackup].wfbdown.chan,dev[cptbackup].wfbdown.antdbm,dev[cptbackup].wfbdown.sent,dev[cptbackup].wfbdown.fails,
+			  dev[cptbackup].freqcptcur,dev[cptbackup].antdbm,dev[cptbackup].seq_out,dev[cptbackup].fails);
+			len+=lentmp;
+			printf("(%ld)\n",len);
+		      }
+
+		    } else {
+		      len=0;
+		    }
+		  }
+		  if (id==TUN_FD) write(param.fd[TUN_FD], ptr, len);
+		  else if (len>0) len = sendto(param.fd[id],ptr,len,0,(struct sockaddr *)&(param.addr_out[id]), sizeof(struct sockaddr));
+#endif // ROLE
+		}
                 ptr+=len;
               }
 	    }
