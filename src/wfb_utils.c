@@ -82,6 +82,7 @@ bool wfb_utils_init(wfb_utils_t *param){
   param->nofaultsec = 0;
   param->sync_active = false;
   param->datatosend = false;
+  param->ping = 0;
 
 #ifdef RAW
   bool ret=false;

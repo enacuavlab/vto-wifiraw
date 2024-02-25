@@ -271,12 +271,7 @@ int main(int argc, char **argv) {
 #else
                   if (id==WFB_FD) {
 		    memcpy(&dev[cpt].wfbdown,((wfbdown_t *)ptr),sizeof(wfbdown_t));
-
-		    clock_gettime( CLOCK_MONOTONIC, &stp);
-                    stp_n1 = (stp.tv_nsec + (stp.tv_sec * 1000000000L));
-                    if (dev[cpt].stp_n!=0)  dev[cpt].inter_n = (stp_n1 - dev[cpt].stp_n);
-                    dev[cpt].stp_n = stp_n1;
-
+                    dev[cpt].ping = 0;
 		    if (cpt==cptmain) {
 		      ptr=wfbmsg;
 		      GET_TEMPERATURE;
@@ -371,7 +366,16 @@ int main(int argc, char **argv) {
 #else
             if (!(dev[rawcpt].sync_active)&&(timetosend)) {
 
-	      printf("(%d)(%ld)\n",rawcpt,dev[rawcpt].inter_n);
+	      lenlog=0;
+	      if ((cptmain>=0)&&(rawcpt==cptmain)) {
+		dev[cptmain].ping++;
+	        if (dev[cptmain].ping>2){ 
+	          lenlog=sprintf((char *)wfbmsg,"RADIO Lost dev(%d) chan(%d)\n",rawcpt,dev[cptmain].freqcptcur);
+		  dev[cptmain].unlockfreq=true;
+		  dev[cptbackup].unlockfreq=true;
+		  cptmain=-1;cptbackup=-1;
+		}
+              }
 
 	      if (dev[rawcpt].unlockfreq) {
                 if (dev[rawcpt].freqcptcur < (dev[rawcpt].freqsnb-1)) (dev[rawcpt].freqcptcur)++; else dev[rawcpt].freqcptcur = 0;
@@ -379,7 +383,8 @@ int main(int argc, char **argv) {
                   if (dev[rawcpt].freqcptcur < (dev[rawcpt].freqsnb-1)) (dev[rawcpt].freqcptcur)++; else dev[rawcpt].freqcptcur = 0;
 	        }
                 wfb_utils_setfreq(dev[rawcpt].freqcptcur,&dev[rawcpt]);
-	        lenlog=sprintf((char *)wfbmsg,"RADIO scan dev(%d) chan(%d)\n",rawcpt,dev[rawcpt].freqcptcur);
+	        lentmp=sprintf((char *)wfbmsg+lenlog,"RADIO scan dev(%d) chan(%d)\n",rawcpt,dev[rawcpt].freqcptcur);
+		lenlog+=lentmp;
               } else {
 		len = 0;
 		if (dev[rawcpt].repeat>0 ) { 

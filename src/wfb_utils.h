@@ -39,6 +39,7 @@ typedef struct wfb_utils_t {
   wfbdown_t wfbdown;
   bool wfbtosendup;
   wfbup_t wfbup;
+  uint8_t ping;
 #ifdef RAW
   int8_t antdbm;
   uint16_t ifind;
