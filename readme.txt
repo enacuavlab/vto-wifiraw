@@ -1,6 +1,6 @@
 This project provides wireless interface between ground and board systems.
 
-Two wireless devices on both sides may improve communication.
+Two wireless devices on both sides may improve communication using rolling channel hopping.
 
 -------------------------------------------------------------------------------
 git clone --recurse-submodules  http://github.com/enacuavlab/vto-wifiraw.git
