@@ -65,7 +65,6 @@ int main(int argc, char **argv) {
   struct timespec stp;
   bool crcok=false,timetosend=false;
   uint8_t onlinebuff[2][FD_NB][ONLINE_SIZE],*ptr,id;
-  uint8_t state=0;
   uint16_t dst,src,seq_prev,seq;
   int ret;
   ssize_t len,lensum,lentmp;
@@ -173,41 +172,35 @@ int main(int argc, char **argv) {
                     if (cptmain<0) {
                       if ((((wfbdown_t *)ptr)->mainchan)) {
 
-		        if ((state==2)&&((((wfbdown_t *)ptr)->backupchan)>=0)) {
+		        cptmain=cpt;
+                        dev[cptmain].unlockfreq=false;
+		        lenlog=sprintf((char *)wfbmsg,"RADIO Lock Main dev(%d)chan(%d)\n",cptmain,dev[cptmain].freqcptcur);
+
+                        if ((((wfbdown_t *)ptr)->backupchan)==-1) {
+                          listenflag=cptmain;
+			  if(cptmain==0)cpttmp=1;else cpttmp=0;
+                          dev[cpttmp].sync_active = true;
+                          lentmp=sprintf((char *)wfbmsg+lenlog,"RADIO Waiting Backup from Main dev(%d)chan(%d)\n",cptmain,dev[cptmain].freqcptcur);lenlog+=lentmp;
+			}
+
+		        if ((((wfbdown_t *)ptr)->backupchan)>=0) {
 		          if(cptmain==0)cptbackup=1;else cptbackup=0;
 //			  dev[cpttmp].sync_active = false; // if it was Waiting Backup
                           dev[cptbackup].unlockfreq=false;
                           dev[cptbackup].freqcptcur=(((wfbdown_t *)ptr)->backupchan);
 		          wfb_utils_setfreq(dev[cptbackup].freqcptcur,&dev[cptbackup]);
                           lentmp=sprintf((char *)wfbmsg+lenlog,"RADIO Set Backup dev(%d)chan(%d)\n",cptbackup,dev[cptbackup].freqcptcur);lenlog+=lentmp;
-			  state++;
 		        } 
 
-                        if ((state==1)&&((((wfbdown_t *)ptr)->backupchan)==-1)) {
-                          listenflag=cptmain;
-			  if(cptmain==0)cpttmp=1;else cpttmp=0;
-//                          dev[cpttmp].sync_active = true;
-                          lentmp=sprintf((char *)wfbmsg+lenlog,"RADIO Waiting Backup from Main dev(%d)chan(%d)\n",cptmain,dev[cptmain].freqcptcur);lenlog+=lentmp;
-			  state++;
-			}
-
-			if (state==0) {
-		          cptmain=cpt;
-                          dev[cptmain].unlockfreq=false;
-		          lenlog=sprintf((char *)wfbmsg,"RADIO Lock Main dev(%d)chan(%d)\n",cptmain,dev[cptmain].freqcptcur);
-			  printf(wfbmsg);
-			  state++;
-			}
-
-                        if ((state!=3)&&((((wfbdown_t *)ptr)->backupchan)==-2)) {
+                        if ((((wfbdown_t *)ptr)->backupchan)==-2) {
 		          dev[cptmain].wfbup.backupchan=-2;
                           dev[cptmain].repeat=2;
 			  listenflag=cptmain;
                           if(cptmain==0)cptbackup=1;else cptbackup=0;
                           dev[cptbackup].sync_active = true;
                           lentmp=sprintf((char *)wfbmsg+lenlog,"RADIO Set No Backup from Main dev(%d)(%d)\n",cptmain,dev[cptmain].freqcptcur);lenlog+=lentmp;
-			  state=3;
                         }
+
                       } else {
   		        cptbackup=cpt;
   		        dev[cptbackup].unlockfreq=false;
@@ -219,14 +212,13 @@ int main(int argc, char **argv) {
 			  cptmain,dev[cptmain].freqcptcur,cptbackup,dev[cptbackup].freqcptcur);
 		      }
                     } else { // else if (cptmain<0)
-                      if ((state==2)&&(cptbackup<0)&&(((wfbdown_t *)ptr)->backupchan>=0)) {
+                      if ((cptbackup<0)&&(((wfbdown_t *)ptr)->backupchan>=0)) {
 		        if(cptmain==0)cptbackup=1;else cptbackup=0;
                         dev[cptbackup].unlockfreq=false;
 		        dev[cptbackup].freqcptcur=(((wfbdown_t *)ptr)->backupchan);
                         wfb_utils_setfreq(dev[cptbackup].freqcptcur,&dev[cptbackup]);
 		        listenflag=2;
 		        lenlog=sprintf((char *)wfbmsg,"RADIO Lock Backup dev(%d)chan(%d)\n",cptbackup,dev[cptbackup].freqcptcur);
-			state++;
 		      }
                     } // end if (cptmain<0)
                     if ((cptmain>=0)&&(cptbackup>=0)&&((((wfbdown_t *)ptr)->mainchan)==true)) {
@@ -279,6 +271,12 @@ int main(int argc, char **argv) {
 #else
                   if (id==WFB_FD) {
 		    memcpy(&dev[cpt].wfbdown,((wfbdown_t *)ptr),sizeof(wfbdown_t));
+
+		    clock_gettime( CLOCK_MONOTONIC, &stp);
+                    stp_n1 = (stp.tv_nsec + (stp.tv_sec * 1000000000L));
+                    if (dev[cpt].stp_n!=0)  dev[cpt].inter_n = (stp_n1 - dev[cpt].stp_n);
+                    dev[cpt].stp_n = stp_n1;
+
 		    if (cpt==cptmain) {
 		      ptr=wfbmsg;
 		      GET_TEMPERATURE;
@@ -286,13 +284,13 @@ int main(int argc, char **argv) {
 			dev[cptmain].wfbdown.temp,dev[cptmain].wfbdown.chan,dev[cptmain].wfbdown.antdbm,dev[cptmain].wfbdown.sent,dev[cptmain].wfbdown.fails,
 			temperature,dev[cptmain].freqcptcur,dev[cptmain].antdbm,dev[cptmain].seq_out,dev[cptmain].fails);
 		      len+=lenlog;
-		      if (cptbackup>0) {
+		      lenlog=0;
+		      if (cptbackup>=0) {
 		        lentmp=sprintf((char *)wfbmsg+len-1,"  BACK chan(%d) dbm(%d) sent(%d) fails(%d) <> chan(%d) dbm(%d) sent(%d) fails(%d)\n",
 		  	  dev[cptbackup].wfbdown.chan,dev[cptbackup].wfbdown.antdbm,dev[cptbackup].wfbdown.sent,dev[cptbackup].wfbdown.fails,
 			  dev[cptbackup].freqcptcur,dev[cptbackup].antdbm,dev[cptbackup].seq_out,dev[cptbackup].fails);
 			len+=lentmp;
 		      }
-
 		    } else {
 		      len=0;
 		    }
@@ -372,6 +370,9 @@ int main(int argc, char **argv) {
 	        }
 #else
             if (!(dev[rawcpt].sync_active)&&(timetosend)) {
+
+	      printf("(%d)(%ld)\n",rawcpt,dev[rawcpt].inter_n);
+
 	      if (dev[rawcpt].unlockfreq) {
                 if (dev[rawcpt].freqcptcur < (dev[rawcpt].freqsnb-1)) (dev[rawcpt].freqcptcur)++; else dev[rawcpt].freqcptcur = 0;
 		if ((cptfdstart==0)&&(dev[0].freqcptcur == dev[1].freqcptcur)){
