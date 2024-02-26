@@ -158,14 +158,24 @@ int main(int argc, char **argv) {
 		    }
                   }
 #else
-		  if ((cptmain<0)&&(cptfdstart==1)) {
+		  if ((cptfdstart==1)&&(cptmain<0)) {
+		    if (((wfbdown_t *)ptr)->mainchan) {
                       cptmain=cpt;
+		    } else {
+		      if ((((wfbdown_t *)ptr)->backupchan)>=0) {
+			cptmain=cpt;
+			dev[cptmain].freqcptcur=(((wfbdown_t *)ptr)->backupchan);
+		        wfb_utils_setfreq(dev[cptmain].freqcptcur,&dev[cptmain]);
+		      }
+		    }
+		    if (cptmain>=0) {
 		      dev[cptmain].unlockfreq=false;
 		      dev[cptmain].wfbup.backupchan=-2;
                       dev[cptmain].repeat=2;
-		      if(cptmain==0)cptbackup=1;else cptbackup=0;
-                      dev[cptbackup].sync_active = true;
-		      printf("(%d)\n",cptmain);
+		      if(cptmain==0)cpttmp=1;else cpttmp=0;
+                      dev[cpttmp].sync_active = true;
+		      lenlog=sprintf((char *)wfbmsg,"RADIO SingleRcv Lock Main dev(%d)chan(%d)\n",cptmain,dev[cptmain].freqcptcur);
+		    }
 		  }
                   if (cptfdstart==0) {
                     if (cptmain<0) {
@@ -239,7 +249,7 @@ int main(int argc, char **argv) {
 		        dev[cptbackup].freqcptcur=(((wfbdown_t *)ptr)->backupchan);
                         wfb_utils_setfreq(dev[cptbackup].freqcptcur,&dev[cptbackup]);
 			listenflag=2;
-			lenlog=sprintf((char *)wfbmsg,"RADIO Recovered Main dev(%d)chan(%d)\n",cptbackup,dev[cptbackup].freqcptcur);
+			lenlog=sprintf((char *)wfbmsg,"RADIO Switched Backup dev(%d)chan(%d)\n",cptbackup,dev[cptbackup].freqcptcur);
 		      }
 		    }
                     if ((cptmain>=0)&&(cptbackup>=0)&&((((wfbdown_t *)ptr)->mainchan)==true)) {
@@ -247,7 +257,7 @@ int main(int argc, char **argv) {
 		        backuprefresh=false;
                         backuponce=true;
 			listenflag=cptmain;
-			printf("REFRESHING\n");
+			lenlog=sprintf((char *)wfbmsg,"RADIO Recovering Backup dev(%d)chan(%d)\n",cptbackup,dev[cptbackup].freqcptcur);
 		      }
                       if ((backuponce)&&(!backuprefresh)&&((((wfbdown_t *)ptr)->backupchan)>=0)) {
                         backuponce=false;
@@ -256,7 +266,7 @@ int main(int argc, char **argv) {
                         dev[cptbackup].unlockfreq=false;
 		        dev[cptbackup].freqcptcur=(((wfbdown_t *)ptr)->backupchan);
                         wfb_utils_setfreq(dev[cptbackup].freqcptcur,&dev[cptbackup]);
-                        printf("REFRESHED\n");
+			lenlog=sprintf((char *)wfbmsg,"RADIO Recovered Backup dev(%d)chan(%d)\n",cptbackup,dev[cptbackup].freqcptcur);
 		      }
 		    }
 		  }
@@ -372,14 +382,18 @@ int main(int argc, char **argv) {
 	      if ((cptmain>=0)&&(rawcpt==cptmain)) {
 		dev[cptmain].ping++;
 	        if (dev[cptmain].ping>2){ 
-	          lenlog=sprintf((char *)wfbmsg,"RADIO Lost dev(%d) chan(%d) backup(%d)(%d)(%d)\n",rawcpt,dev[cptmain].freqcptcur,cptbackup,dev[cptbackup].sync_active,true);
-		  listenflag=2;
+	          lenlog=sprintf((char *)wfbmsg,"RADIO Lost dev(%d) chan(%d)\n",cptmain,dev[cptmain].freqcptcur);
 		  dev[cptmain].freqcptcur=INITCHAN1;
 		  dev[cptmain].unlockfreq=true;
-		  if (cptmain==0)cpttmp=1;else cpttmp=0;
-		  dev[cpttmp].freqcptcur=INITCHAN0;
-		  dev[cpttmp].unlockfreq=true;dev[cpttmp].sync_active=false;
-		  cptmain=-1;cptbackup=-1;
+		  if (cptfdstart==0) {
+	            lentmp=sprintf((char *)wfbmsg+lenlog-1," backup(%d)(%d)\n",cptbackup,dev[cptbackup].freqcptcur,true);
+		    lenlog+=lentmp;
+		    if (cptmain==0)cpttmp=1;else cpttmp=0;
+		    dev[cpttmp].freqcptcur=INITCHAN0;
+		    dev[cpttmp].unlockfreq=true;dev[cpttmp].sync_active=false;
+		    cptmain=-1;cptbackup=-1;
+		    listenflag=2;
+		  }
 		}
               }
 
