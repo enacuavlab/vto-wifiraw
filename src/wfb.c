@@ -366,7 +366,6 @@ int main(int argc, char **argv) {
 #else
             if (!(dev[rawcpt].sync_active)&&(timetosend)) {
 
-	      lenlog=0;
 	      if ((cptmain>=0)&&(rawcpt==cptmain)) {
 		dev[cptmain].ping++;
 	        if (dev[cptmain].ping>2){ 
