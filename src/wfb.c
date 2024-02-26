@@ -26,7 +26,6 @@ int main(int argc, char **argv) {
 
   bool switchonce=true,inverted=false,backuprefresh=true,backuponce=true;
   int8_t cptmain=-1,cptbackup=-1,cpttmp=-1;
-  uint8_t raw0_cptfreq=0,raw1_cptfreq=18;
   uint8_t cptfdstart=0,listenflag=0;
   wfb_utils_t dev[2];
   if (wfb_utils_init(&dev[1])) { // RAW1_FD
@@ -35,8 +34,8 @@ int main(int argc, char **argv) {
     dev[1].wfbdown.mainchan = false;
     dev[1].wfbdown.backupchan = -2;
     dev[1].wfbup.backupchan = -2;
-    if (raw1_cptfreq < dev[1].freqsnb) {
-      if (wfb_utils_setfreq(raw1_cptfreq,&dev[1])) {
+    if (INITCHAN1 < dev[1].freqsnb) {
+      if (wfb_utils_setfreq(INITCHAN1,&dev[1])) {
         if (wfb_utils_init(&dev[0])) { // RAW0_FD
           cptfdstart = 0;
 	  listenflag = 2;
@@ -46,8 +45,8 @@ int main(int argc, char **argv) {
 	  dev[1].wfbdown.backupchan = -1;
 	  dev[0].wfbup.backupchan = -1;
 	  dev[1].wfbup.backupchan = -1;
-          if (raw0_cptfreq < dev[0].freqsnb) {
-            if (!wfb_utils_setfreq(raw0_cptfreq,&dev[0])) exit(-1);
+          if (INITCHAN0 < dev[0].freqsnb) {
+            if (!wfb_utils_setfreq(INITCHAN0,&dev[0])) exit(-1);
           }
         }
       }
@@ -229,7 +228,7 @@ int main(int argc, char **argv) {
 			    inverted=true;
 			    cpttmp=cptmain;cptmain=cptbackup;cptbackup=cpttmp;
 			    listenflag=cptmain;
-			    printf("INVERTING (%d)\n",listenflag);
+			    lenlog=sprintf((char *)wfbmsg,"RADIO Switching Main to Backup dev(%d)chan(%d)\n",cptbackup,dev[cptbackup].freqcptcur);
 			  }
 			}
 		      }
@@ -240,7 +239,7 @@ int main(int argc, char **argv) {
 		        dev[cptbackup].freqcptcur=(((wfbdown_t *)ptr)->backupchan);
                         wfb_utils_setfreq(dev[cptbackup].freqcptcur,&dev[cptbackup]);
 			listenflag=2;
-			printf("INVERTED (%d)\n",listenflag);
+			lenlog=sprintf((char *)wfbmsg,"RADIO Recovered Main dev(%d)chan(%d)\n",cptbackup,dev[cptbackup].freqcptcur);
 		      }
 		    }
                     if ((cptmain>=0)&&(cptbackup>=0)&&((((wfbdown_t *)ptr)->mainchan)==true)) {
@@ -329,6 +328,10 @@ int main(int argc, char **argv) {
 	      cptbackup=-1;
 	    }
 	  } 
+
+
+          if ((cptbackup>=0)&&(timetosend)) printf("(%d)\n",dev[cptmain].fails++);
+
 #endif // ROLE
           for (uint8_t rawcpt = cptfdstart; rawcpt < 2; rawcpt++) {
 #if ROLE
@@ -369,9 +372,13 @@ int main(int argc, char **argv) {
 	      if ((cptmain>=0)&&(rawcpt==cptmain)) {
 		dev[cptmain].ping++;
 	        if (dev[cptmain].ping>2){ 
-	          lenlog=sprintf((char *)wfbmsg,"RADIO Lost dev(%d) chan(%d)\n",rawcpt,dev[cptmain].freqcptcur);
+	          lenlog=sprintf((char *)wfbmsg,"RADIO Lost dev(%d) chan(%d) backup(%d)(%d)(%d)\n",rawcpt,dev[cptmain].freqcptcur,cptbackup,dev[cptbackup].sync_active,true);
+		  listenflag=2;
+		  dev[cptmain].freqcptcur=INITCHAN1;
 		  dev[cptmain].unlockfreq=true;
-		  dev[cptbackup].unlockfreq=true;
+		  if (cptmain==0)cpttmp=1;else cpttmp=0;
+		  dev[cpttmp].freqcptcur=INITCHAN0;
+		  dev[cpttmp].unlockfreq=true;dev[cpttmp].sync_active=false;
 		  cptmain=-1;cptbackup=-1;
 		}
               }
