@@ -1,6 +1,10 @@
 # sudo apt-get install libnl-3-dev
+
 # sudo ln -s /usr/lib/x86_64-linux-gnu/libnl-route-3.so.200.26.0 /usr/lib/x86_64-linux-gnu/libnl-route-3.so
 # sudo ln -s /usr/lib/x86_64-linux-gnu/libnl-genl-3.so.200.26.0 /usr/lib/x86_64-linux-gnu/libnl-genl-3.so
+
+# sudo ln -s /usr/lib/aarch64-linux-gnu/libnl-genl-3.so.200 /usr/lib/aarch64-linux-gnu/libnl-genl-3.so
+# sudo ln -s /usr/lib/aarch64-linux-gnu/libnl-route-3.so.200 /usr/lib/aarch64-linux-gnu/libnl-route-3.so
 
 ROLE := BOARD
 #ROLE := GROUND
