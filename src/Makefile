@@ -2,11 +2,14 @@
 # sudo ln -s /usr/lib/x86_64-linux-gnu/libnl-route-3.so.200.26.0 /usr/lib/x86_64-linux-gnu/libnl-route-3.so
 # sudo ln -s /usr/lib/x86_64-linux-gnu/libnl-genl-3.so.200.26.0 /usr/lib/x86_64-linux-gnu/libnl-genl-3.so
 
-#ROLE := BOARD
-ROLE := GROUND
+ROLE := BOARD
+#ROLE := GROUND
 
 PROT := RAW
 #PROT :=
+
+INITCHAN0 := 0
+INITCHAN1 := 30
 
 
 # DO NOT TOUCH BELOW THIS LINE
@@ -28,13 +31,16 @@ PROTFLAG :=
     PROTFLAG += -DRAW
   endif
 
+CHANFLAG := -DINITCHAN0=$(INITCHAN0) -DINITCHAN1=$(INITCHAN1)
+
+
 all = wfb
 OBJS = wfb.o wfb_utils.o
 
 CFLAGS ?= -O2 -g
 CFLAGS += -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration
 CFLAGS += -DCONFIG_LIBNL30 -I/usr/include/libnl3
-CFLAGS += $(PROTFLAG) $(ROLEFLAG)
+CFLAGS += $(PROTFLAG) $(ROLEFLAG) $(CHANFLAG)
 
 LIBS +=  -lnl-route-3 -lnl-genl-3 -lnl-3
 
