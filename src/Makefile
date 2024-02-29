@@ -6,8 +6,8 @@
 # sudo ln -s /usr/lib/aarch64-linux-gnu/libnl-genl-3.so.200 /usr/lib/aarch64-linux-gnu/libnl-genl-3.so
 # sudo ln -s /usr/lib/aarch64-linux-gnu/libnl-route-3.so.200 /usr/lib/aarch64-linux-gnu/libnl-route-3.so
 
-ROLE := BOARD
-#ROLE := GROUND
+#ROLE := BOARD
+ROLE := GROUND
 
 PROT := RAW
 #PROT :=
@@ -37,6 +37,15 @@ PROTFLAG :=
 
 CHANFLAG := -DINITCHAN0=$(INITCHAN0) -DINITCHAN1=$(INITCHAN1)
 
+OSFLAG :=
+  UNAME_R := $(shell uname -r)
+  ifeq ($(UNAME_R),5.10.160-legacy-rk35xx)
+    OSFLAG = -DUART=\"/dev/ttyS7\"
+  else ifeq ($(UNAME_R),4.9.253-tegra)
+    OSFLAG = -DUART=\"/dev/ttyTHS1\"
+  else ifeq ($(UNAME_R),6.1.21-v8+)
+    OSFLAG = -DUART=\"/dev/ttyAMA0\"
+  endif
 
 all = wfb
 OBJS = wfb.o wfb_utils.o
@@ -44,7 +53,7 @@ OBJS = wfb.o wfb_utils.o
 CFLAGS ?= -O2 -g
 CFLAGS += -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration
 CFLAGS += -DCONFIG_LIBNL30 -I/usr/include/libnl3
-CFLAGS += $(PROTFLAG) $(ROLEFLAG) $(CHANFLAG)
+CFLAGS += $(PROTFLAG) $(ROLEFLAG) $(CHANFLAG) $(OSFLAG)
 
 LIBS +=  -lnl-route-3 -lnl-genl-3 -lnl-3
 
