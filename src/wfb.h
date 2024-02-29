@@ -15,7 +15,7 @@ typedef struct {
 } __attribute__((packed)) subpayhdr_t;
 
 
-typedef enum { RAW0_FD, RAW1_FD, WFB_FD, TUN_FD, VID1_FD, FD_NB } cannal_t;
+typedef enum { RAW0_FD, RAW1_FD, WFB_FD, TUN_FD, VID1_FD, TEL_FD, FD_NB } cannal_t;
 
 typedef struct {
   char name[20];
@@ -24,9 +24,12 @@ typedef struct {
   uint16_t maxfd_raw[3];
   uint16_t maxfd_all[3];
   uint16_t fd[FD_NB];
+  uint16_t fd_teeuart;
   int8_t  offsetraw;
   struct sockaddr_in addr_out[FD_NB];
 } init_t;
+
+#include <termios.h>
 
 #include <linux/if_tun.h>
 #define TUN_MTU 1400
@@ -235,7 +238,33 @@ bool wfb_init(char *raw0_name, char *raw1_name, init_t *param) {
   param->addr_out[dev].sin_addr.s_addr = inet_addr(ADDR_LOCAL);
 #endif // ROLE
        
-       
+  
+  dev=TEL_FD;        // Telemetry (one bidirectional link)
+#if ROLE       
+  if (-1 == (param->fd[dev]=open(UART,O_RDWR | O_NOCTTY | O_NONBLOCK))) exit(-1);
+  struct termios tty;
+  if (0 != tcgetattr(param->fd[dev], &tty)) exit(-1);
+  cfsetispeed(&tty,B115200);
+  cfsetospeed(&tty,B115200);
+  cfmakeraw(&tty);
+  if (0 != tcsetattr(param->fd[dev], TCSANOW, &tty)) exit(-1);
+  tcflush(param->fd[dev],TCIFLUSH);
+  tcdrain(param->fd[dev]);
+  if (-1 == (param->fd_teeuart=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP))) exit(-1);
+#else            // option on ground (two directional links)
+  if (-1 == (param->fd[dev]=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP))) exit(-1);
+  addr_in[dev].sin_family = AF_INET;
+  addr_in[dev].sin_port = htons(4245);
+  addr_in[dev].sin_addr.s_addr = inet_addr(ADDR_LOCAL);
+  if (-1 == bind(param->fd[dev], (struct sockaddr *)&addr_in[dev], sizeof(addr_in[dev]))) exit(-1);
+#endif // ROLE
+  param->addr_out[dev].sin_family = AF_INET;
+  param->addr_out[dev].sin_port = htons(4244);
+  param->addr_out[dev].sin_addr.s_addr = inet_addr(ADDR_LOCAL);
+  FD_SET(param->fd[dev], &(param->readset_all[0]));if (param->maxfd_all[0] < param->fd[dev]) param->maxfd_all[0]=param->fd[dev];
+  FD_SET(param->fd[dev], &(param->readset_all[1]));if (param->maxfd_all[1] < param->fd[dev]) param->maxfd_all[1]=param->fd[dev];
+  FD_SET(param->fd[dev], &(param->readset_all[2]));if (param->maxfd_all[2] < param->fd[dev]) param->maxfd_all[2]=param->fd[dev];
+
   return(ret);
 }
 

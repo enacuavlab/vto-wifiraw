@@ -275,7 +275,7 @@ int main(int argc, char **argv) {
 
 		if (cptmain>=0) {
 #if ROLE
-	          if (id==TUN_FD) write(param.fd[id], ptr, len);
+	          if ((id==TUN_FD)||(id==TEL_FD)) write(param.fd[id], ptr, len);
                   else lensum=0;
 #else
                   if (id==WFB_FD) {
