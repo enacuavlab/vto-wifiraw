@@ -8,6 +8,7 @@ git clone --recurse-submodules  http://github.com/enacuavlab/vto-wifiraw.git
 
 Installation need internet connection and sudo 
 
+cd vto-wifiraw
 ./install.sh
 or
 ./uninstall.sh
