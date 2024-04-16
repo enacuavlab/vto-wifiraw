@@ -3,6 +3,12 @@ This project provides wireless interface between ground and board systems.
 Two wireless devices on both sides may improve communication using rolling channel hopping.
 
 -------------------------------------------------------------------------------
+Check if there is not other wifi driver installed
+sudo find / -name 88XXau*
+cd /usr/lib/modules/...
+sudo mv 88XXau.ko 88XXau.ko.old
+
+-------------------------------------------------------------------------------
 git clone --recurse-submodules  http://github.com/enacuavlab/vto-wifiraw.git
 (git clone --recurse-submodules  git@github.com:enacuavlab/vto-wifiraw.git)
 
