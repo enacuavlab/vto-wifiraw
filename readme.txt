@@ -15,14 +15,14 @@ or
 Before first run, compile the suitable executable file on BOARD and on GROUND
 
 src/Makefile
-#ROLE := BOARD commented !
-ROLE := GROUND
+ROLE := BOARD
+#ROLE := GROUND commented !
 
 make
 
 src/Makefile
-ROLE := BOARD
-#ROLE := GROUND commented !
+ROLE := GROUND
+#ROLE := BOARD commented !
 
 make
 
