@@ -52,6 +52,14 @@ else
   make
   sudo make install
 fi  
+sudo apt-get install libnl-3-dev
+if uname -m == "x86_64"; then
+  sudo ln -s /usr/lib/x86_64-linux-gnu/libnl-route-3.so.200.26.0 /usr/lib/x86_64-linux-gnu/libnl-route-3.so
+  sudo ln -s /usr/lib/x86_64-linux-gnu/libnl-genl-3.so.200.26.0 /usr/lib/x86_64-linux-gnu/libnl-genl-3.so
+else
+  sudo ln -s /usr/lib/aarch64-linux-gnu/libnl-genl-3.so.200 /usr/lib/aarch64-linux-gnu/libnl-genl-3.so
+  sudo ln -s /usr/lib/aarch64-linux-gnu/libnl-route-3.so.200 /usr/lib/aarch64-linux-gnu/libnl-route-3.so
+fi
 if uname -a | grep -cs "Ubuntu"> /dev/null 2>&1; then 
   sudo cp $PROJ/material/wfb.conf /etc/NetworkManager/conf.d
   sudo systemctl reload NetworkManager.service 
