@@ -1,14 +1,6 @@
 This project provides wireless communication between ground and board systems.
 
 -------------------------------------------------------------------------------
-TODO in install.sh
-- Check if there is not other wifi driver installed
-sudo find / -name 88XXau*
-cd /usr/lib/modules/...
-sudo mv 88XXau.ko 88XXau.ko.old
-- ln in src/Makefile
-
--------------------------------------------------------------------------------
 git clone --recurse-submodules  http://github.com/enacuavlab/vto-wifiraw.git
 (git clone --recurse-submodules  git@github.com:enacuavlab/vto-wifiraw.git)
 
