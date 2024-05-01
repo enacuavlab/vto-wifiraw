@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
   init_t param;
   if (!wfb_init(dev[0].name,dev[1].name,&param)) exit(-1);
 
-#ifdef RAW
+#if RAW
   uint16_t datalen,radiotapvar,offset_droneid;
   uint8_t offset, droneid_char='1'-DRONEID;
   uint32_t crc, crc_rx;
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
 #else
           if ((len>9) && (0!=memcmp(&onlinebuff[cpt][cpt][DRONIDSSIDPOS_RX],&droneidbuf[DRONIDSSIDPOS_TX],9))) {
 #endif // ROLE
-#ifdef RAW
+#if RAW
             radiotapvar = (onlinebuff[cpt][cpt][2] + (onlinebuff[cpt][cpt][3] << 8)); // get variable radiotap header size
             offset_droneid =radiotapvar + DRONEID_IEEE;									  
             if ((offset_droneid < (RADIOTAP_HEADER_MAX_SIZE+DRONEID_IEEE))
@@ -275,7 +275,11 @@ int main(int argc, char **argv) {
 
 		if (cptmain>=0) {
 #if ROLE
-	          if ((id==TUN_FD)||(id==TEL_FD)) write(param.fd[id], ptr, len);
+                  if ((id==TUN_FD)
+#if OPT_TELEM
+                    || (id==TEL_FD)
+#endif // OPT_TELEM
+                    ) write(param.fd[id], ptr, len);
                   else lensum=0;
 #else
                   if (id==WFB_FD) {
@@ -477,12 +481,12 @@ int main(int argc, char **argv) {
               (((payhdr_t *)ptr)->seq) = dev[rawcpt].seq_out;
               (((payhdr_t *)ptr)->stp_n) = stp_n;
               len = (((payhdr_t *)ptr)->len);
-#ifdef RAW
+#if RAW
               memcpy(&onlinebuff[rawcpt][cpt][0],radiotaphdr,sizeof(radiotaphdr));
               memcpy(&onlinebuff[rawcpt][cpt][0]+sizeof(radiotaphdr),ieeehdr,sizeof(ieeehdr));
               len = write(param.fd[rawcpt],&onlinebuff[rawcpt][cpt][0],(param.offsetraw)+sizeof(payhdr_t)+len);
 #else
-              len = sendto(param.fd[rawcwcpt],&onlinebuff[cpt][0]+(param.offsetraw),sizeof(payhdr_t)+len,0,
+              len = sendto(param.fd[rawcpt],&onlinebuff[cpt][0]+(param.offsetraw),sizeof(payhdr_t)+len,0,
 			   (struct sockaddr *)&(param.addr_out[0]), sizeof(struct sockaddr));
 #endif // RAW
 

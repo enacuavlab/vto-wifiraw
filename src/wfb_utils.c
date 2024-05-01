@@ -15,7 +15,7 @@ uint8_t g_freqsnb;
 uint32_t g_freqs[freqsmax];
 uint32_t g_chans[freqsmax];
 
-#ifdef RAW
+#if RAW
 /*****************************************************************************/
 static int handler_get_index_type(struct nl_msg *msg, void *arg) {
   struct nlattr *tb_msg[NL80211_ATTR_MAX + 1];
@@ -84,7 +84,7 @@ bool wfb_utils_init(wfb_utils_t *param){
   param->datatosend = false;
   param->ping = 0;
 
-#ifdef RAW
+#if RAW
   bool ret=false;
   DIR *d1,*d2;
   FILE *fd;
@@ -203,7 +203,7 @@ bool wfb_utils_init(wfb_utils_t *param){
 bool wfb_utils_setfreq(int freqcpt,wfb_utils_t *param) {
   bool ret=true;
   param->freqcptcur = freqcpt;
-#ifdef RAW
+#if RAW
   struct nl_msg *msg=nlmsg_alloc();
   genlmsg_put(msg,0,0,g_family,0,0,NL80211_CMD_SET_CHANNEL,0);
   NLA_PUT_U32(msg,NL80211_ATTR_IFINDEX,param->ifind);

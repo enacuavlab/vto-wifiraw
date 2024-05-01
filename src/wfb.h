@@ -15,7 +15,11 @@ typedef struct {
 } __attribute__((packed)) subpayhdr_t;
 
 
+#if OPT_TELEM
 typedef enum { RAW0_FD, RAW1_FD, WFB_FD, TUN_FD, VID1_FD, TEL_FD, FD_NB } cannal_t;
+#else
+typedef enum { RAW0_FD, RAW1_FD, WFB_FD, TUN_FD, VID1_FD, FD_NB } cannal_t;
+#endif // OPT_TELEM
 
 typedef struct {
   char name[20];
@@ -34,7 +38,7 @@ typedef struct {
 #include <linux/if_tun.h>
 #define TUN_MTU 1400
 
-#ifdef RAW
+#if RAW
 #include <net/ethernet.h>
 #include <linux/filter.h>
 #include <linux/if_packet.h>
@@ -85,16 +89,16 @@ void build_crc32_table(void) {
 #define ONLINE_SIZE ( RADIOTAP_HEADER_MAX_SIZE + sizeof(ieeehdr) + sizeof(payhdr_t) + sizeof(subpayhdr_t) + ONLINE_MTU )
 #define DRONEID 5
 #define DRONEID_IEEE 9
-#define ADDR_LOCAL "127.0.0.1"
 #else
 #define ONLINE_SIZE ( sizeof(payhdr_t) + sizeof(subpayhdr_t) + ONLINE_MTU )
 #endif // RAW
+#define ADDR_LOCAL "127.0.0.1"
 
 /*****************************************************************************/
 bool init_raw(char *name,uint16_t noraw_udp_port, uint8_t dev, init_t *param) {
   bool ret=true;
   strcpy(param->name,name);
-#ifdef RAW
+#if RAW
   uint8_t flags;
   uint16_t protocol = htons(ETH_P_ALL);
   if (-1 == (param->fd[dev] = socket(AF_PACKET,SOCK_RAW,protocol))) exit(-1);
@@ -126,13 +130,13 @@ bool init_raw(char *name,uint16_t noraw_udp_port, uint8_t dev, init_t *param) {
 #else //  RAW
 
   struct sockaddr_in addr_in[FD_NB];
-  #if ROLE
+#if ROLE
   addr_in[dev].sin_addr.s_addr = inet_addr(ADDR_REMOTE_BOARD);
   param->addr_out[dev].sin_addr.s_addr = inet_addr(ADDR_REMOTE_GROUND);
-  #else //  ROLE
+#else
   addr_in[dev].sin_addr.s_addr = inet_addr(ADDR_REMOTE_GROUND);
   param->addr_out[dev].sin_addr.s_addr = inet_addr(ADDR_REMOTE_BOARD);
-  #endif // ROLE
+#endif // ROLE
 
   if (-1 == (param->fd[dev]=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP))) exit(-1);
   addr_in[dev].sin_family = AF_INET;
@@ -237,10 +241,10 @@ bool wfb_init(char *raw0_name, char *raw1_name, init_t *param) {
   param->addr_out[dev].sin_port = htons(5600);
   param->addr_out[dev].sin_addr.s_addr = inet_addr(ADDR_LOCAL);
 #endif // ROLE
-       
-  
+
+#if OPT_TELEM
   dev=TEL_FD;        // Telemetry (one bidirectional link)
-#if ROLE       
+#if ROLE
   if (-1 == (param->fd[dev]=open(UART,O_RDWR | O_NOCTTY | O_NONBLOCK))) exit(-1);
   struct termios tty;
   if (0 != tcgetattr(param->fd[dev], &tty)) exit(-1);
@@ -264,6 +268,7 @@ bool wfb_init(char *raw0_name, char *raw1_name, init_t *param) {
   FD_SET(param->fd[dev], &(param->readset_all[0]));if (param->maxfd_all[0] < param->fd[dev]) param->maxfd_all[0]=param->fd[dev];
   FD_SET(param->fd[dev], &(param->readset_all[1]));if (param->maxfd_all[1] < param->fd[dev]) param->maxfd_all[1]=param->fd[dev];
   FD_SET(param->fd[dev], &(param->readset_all[2]));if (param->maxfd_all[2] < param->fd[dev]) param->maxfd_all[2]=param->fd[dev];
+#endif // OPT_TELEM
 
   return(ret);
 }

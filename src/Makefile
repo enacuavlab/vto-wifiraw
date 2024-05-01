@@ -1,6 +1,9 @@
 #ROLE := BOARD
 ROLE := GROUND
 
+#OPT_TELEM := TELEM
+OPT_TELEM :=
+
 PROT := RAW
 #PROT :=
 
@@ -11,33 +14,39 @@ INITCHAN1 := 30
 # DO NOT TOUCH BELOW THIS LINE
 # ----------------------------
 ROLEFLAG :=
-  ifeq ($(ROLE),GROUND)
-    ROLEFLAG = -DROLE=0
- else ifeq ($(ROLE),BOARD)
+  ifeq ($(ROLE),BOARD)
     ROLEFLAG = -DROLE=1
+ else ifeq ($(ROLE),GROUND)
+    ROLEFLAG = -DROLE=0
  endif
 
 PROTFLAG :=
-  ifneq ($(PROT),RAW)
+  ifeq ($(PROT),RAW)
+    PROTFLAG += -DRAW=1
+  else
+    PROTFLAG += -DRAW=0
     PROTFLAG += -DADDR_REMOTE_GROUND=\"10.33.38.74\"
 #    PROTFLAG += -DADDR_REMOTE_BOARD=\"192.168.1.19\"
 #    PROTFLAG += -DADDR_REMOTE_GROUND=\"192.168.1.19\"
     PROTFLAG += -DADDR_REMOTE_BOARD=\"10.33.38.113\"
-  else
-    PROTFLAG += -DRAW
+  endif
+
+OSFLAG :=
+  ifeq ($(OPT_TELEM),TELEM)
+    OSFLAG += -DOPT_TELEM=1
+    UNAME_R := $(shell uname -r)
+    ifeq ($(UNAME_R),5.10.160-legacy-rk35xx)
+      OSFLAG = -DUART=\"/dev/ttyS7\"
+    else ifeq ($(UNAME_R),4.9.253-tegra)
+      OSFLAG = -DUART=\"/dev/ttyTHS1\"
+    else ifeq ($(UNAME_R),6.1.21-v8+)
+      OSFLAG = -DUART=\"/dev/ttyAMA0\"
+    endif
+  else 
+    OSFLAG += -DOPT_TELEM=0
   endif
 
 CHANFLAG := -DINITCHAN0=$(INITCHAN0) -DINITCHAN1=$(INITCHAN1)
-
-OSFLAG :=
-  UNAME_R := $(shell uname -r)
-  ifeq ($(UNAME_R),5.10.160-legacy-rk35xx)
-    OSFLAG = -DUART=\"/dev/ttyS7\"
-  else ifeq ($(UNAME_R),4.9.253-tegra)
-    OSFLAG = -DUART=\"/dev/ttyTHS1\"
-  else ifeq ($(UNAME_R),6.1.21-v8+)
-    OSFLAG = -DUART=\"/dev/ttyAMA0\"
-  endif
 
 all = wfb
 OBJS = wfb.o wfb_utils.o

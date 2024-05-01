@@ -40,14 +40,12 @@ typedef struct wfb_utils_t {
   bool wfbtosendup;
   wfbup_t wfbup;
   uint8_t ping;
-#ifdef RAW
   int8_t antdbm;
   uint16_t ifind;
   uint32_t fails;
   bool unlockfreq;
   uint8_t nofaultsec;
   struct nl_sock *sk_nl;
-#endif // RAW
 } wfb_utils_t;
 bool wfb_utils_init(wfb_utils_t *param);
 bool wfb_utils_setfreq(int freqcpt, wfb_utils_t *param);
