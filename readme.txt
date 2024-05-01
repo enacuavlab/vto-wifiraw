@@ -1,6 +1,4 @@
-This project provides wireless interface between ground and board systems.
-
-Two wireless devices on both sides may improve communication using rolling channel hopping.
+This project provides wireless communication between ground and board systems.
 
 -------------------------------------------------------------------------------
 TODO in install.sh
@@ -65,6 +63,36 @@ socat udp-listen:5800,reuseaddr,fork -
 socat - udp-sendto:5900
 
 etc ...
+
+---------------------------------------------------------------------------------
+0) How does it works
+  Using a specific wireless adapter with injection and monitor capabilities, to build a bidirectionnal link.
+  An additional wifi adapter on both ends, enable channel hopping, to avoid occupied frequencies.
+  Moreover, the wifi driver can be patched to increase transmission power.
+
+1) Behaviour
+- On board: Todo
+- On ground: Todo
+
+2) Software development :
+-  Used
+  - netlink : to retreive available wifi channels and switch among them
+  - raw socket : to retrieve full traffic and detect occupied channels
+- Not used
+  - fec : only recover partial information
+  - pcap : not needed with raw socket
+
+3) Context
+- Wifi traffic => delays
+  CSMA-CA (Collision Avoidance)
+  - Carrier Sending
+  - Carrier signal detected => wait Backoff period (Backoff: random delay from previous trials)
+  - Carrier signal not detected => wait for free carrier during duration DIFS (Distributed Inter Frame Space)
+  - Carrier signal not detected during DIFS => transmit data
+
+4) Todo
+- Available and used bandwitdh ?
+- Latency ?
 
 ---------------------------------------------------------------------------------
 Tested on Raspbian, Ubuntu/Debian and Nvidia Jetpack.  
