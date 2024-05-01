@@ -61,8 +61,10 @@ else
   sudo ln -s /usr/lib/aarch64-linux-gnu/libnl-route-3.so.200 /usr/lib/aarch64-linux-gnu/libnl-route-3.so
 fi
 if uname -a | grep -cs "Ubuntu"> /dev/null 2>&1; then 
-  sudo cp $PROJ/material/wfb.conf /etc/NetworkManager/conf.d
-  sudo systemctl reload NetworkManager.service 
+  if uname -m == "x86_64"; then
+    sudo cp $PROJ/material/wfb.conf /etc/NetworkManager/conf.d
+    sudo systemctl reload NetworkManager.service 
+  fi
 fi
 sudo cp $PROJ/material/8812au.conf /etc/modprobe.d
 sudo cp $PROJ/material/60-wfb.rules /etc/udev/rules.d
