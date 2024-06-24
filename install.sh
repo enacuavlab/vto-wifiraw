@@ -26,6 +26,7 @@ if uname -a | grep -cs "Ubuntu"> /dev/null 2>&1; then DKMS=true; fi
 if uname -a | grep -cs "4.9.253-tegra"> /dev/null 2>&1; then DKMS=true; fi
 if uname -a | grep -cs "5.10.160-legacy-rk35xx"> /dev/null 2>&1; then DKMS=true; fi
 if uname -a | grep -cs "6.1.0-1012-rockchip"> /dev/null 2>&1; then 
+if uname -a | grep -cs "radxa-zero3"> /dev/null 2>&1; then 
   DKMS=true
   sudo rm /usr/lib/modules/6.1.0-1012-rockchip/kernel/drivers/net/wireless/rtl8812au/88XXau.ko
 fi
