@@ -19,6 +19,7 @@ if [ ! $ANSWER = "y" ] || [ -z $ANSWER ]; then exit -1; fi
 if ! groups | grep -q 'sudo'; then exit -1; fi
 sudo apt-get install -y socat git net-tools wireless-tools rfkill v4l-utils build-essential
 cd $PROJ/rtl8812au
+if uname -a | grep -cs "radxa-zero3"> /dev/null 2>&1; then git checkout 63cf0b4; fi
 #if uname -a | grep -cs "4.9.253-tegra"> /dev/null 2>&1; then git checkout 4ab079f7; fi
 #git apply ../material/rtl8812au_v5.6.4.2.patch
 DKMS=false
