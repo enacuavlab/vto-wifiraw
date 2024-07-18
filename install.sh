@@ -19,8 +19,8 @@ if [ ! $ANSWER = "y" ] || [ -z $ANSWER ]; then exit -1; fi
 if ! groups | grep -q 'sudo'; then exit -1; fi
 sudo apt-get install -y socat git net-tools wireless-tools rfkill v4l-utils
 cd $PROJ/rtl8812au
-if uname -a | grep -cs "4.9.253-tegra"> /dev/null 2>&1; then git checkout 4ab079f7; fi
-git apply ../material/rtl8812au_v5.6.4.2.patch
+#if uname -a | grep -cs "4.9.253-tegra"> /dev/null 2>&1; then git checkout 4ab079f7; fi
+#git apply ../material/rtl8812au_v5.6.4.2.patch
 DKMS=false
 if uname -a | grep -cs "Ubuntu"> /dev/null 2>&1; then DKMS=true; fi
 if uname -a | grep -cs "4.9.253-tegra"> /dev/null 2>&1; then DKMS=true; fi
@@ -35,23 +35,25 @@ if $DKMS; then
   sudo apt-get install -y dkms
   sudo make dkms_install
 else 
-  if uname -a | grep -cs "aarch64"; then
-    # RPI 02 ,3B+ & 4 (with OS 64b)
-    sed -i 's/CONFIG_PLATFORM_I386_PC = y/CONFIG_PLATFORM_I386_PC = n/g' Makefile
-    sed -i 's/CONFIG_PLATFORM_ARM64_RPI = n/CONFIG_PLATFORM_ARM64_RPI = y/g' Makefile
-  else
-    #  RPI 0 & 3 & 4 (with OS 32)
-    sed -i 's/CONFIG_PLATFORM_I386_PC = y/CONFIG_PLATFORM_I386_PC = n/g' Makefile
-    sed -i 's/CONFIG_PLATFORM_ARM_RPI = n/CONFIG_PLATFORM_ARM_RPI = y/g' Makefile
-  fi
-  if uname -r | grep -cs "5.15.61-v8+"; then
-    wget https://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-firmware/raspberrypi-kernel-headers_1.20220830-1_arm64.deb
-    sudo apt-get install ./raspberrypi-kernel-headers_1.20220830-1_arm64.deb
-  else
-    sudo apt-get install linux-headers
-  fi
-  make
-  sudo make install
+  echo "NOT SUPPORTED YET ... exit !"
+  exit
+#  if uname -a | grep -cs "aarch64"; then
+#    # RPI 02 ,3B+ & 4 (with OS 64b)
+#    sed -i 's/CONFIG_PLATFORM_I386_PC = y/CONFIG_PLATFORM_I386_PC = n/g' Makefile
+#    sed -i 's/CONFIG_PLATFORM_ARM64_RPI = n/CONFIG_PLATFORM_ARM64_RPI = y/g' Makefile
+#  else
+#    #  RPI 0 & 3 & 4 (with OS 32)
+#    sed -i 's/CONFIG_PLATFORM_I386_PC = y/CONFIG_PLATFORM_I386_PC = n/g' Makefile
+#    sed -i 's/CONFIG_PLATFORM_ARM_RPI = n/CONFIG_PLATFORM_ARM_RPI = y/g' Makefile
+#  fi
+#  if uname -r | grep -cs "5.15.61-v8+"; then
+#    wget https://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-firmware/raspberrypi-kernel-headers_1.20220830-1_arm64.deb
+#    sudo apt-get install ./raspberrypi-kernel-headers_1.20220830-1_arm64.deb
+#  else
+#    sudo apt-get install linux-headers
+#  fi
+#  make
+#  sudo make install
 fi  
 sudo apt-get install libnl-3-dev
 if uname -m == "x86_64"; then
@@ -67,7 +69,7 @@ if uname -a | grep -cs "Ubuntu"> /dev/null 2>&1; then
     sudo systemctl reload NetworkManager.service 
   fi
 fi
-sudo cp $PROJ/material/8812au.conf /etc/modprobe.d
+#sudo cp $PROJ/material/8812au.conf /etc/modprobe.d
 sudo cp $PROJ/material/60-wfb.rules /etc/udev/rules.d
 for f in $PROJ/material/wfb.service $PROJ/scripts/wfb_on.sh; do
   sed -i 's#TOBEUPDATEATINSTALLATION#'$PROJ'#' ${f};
