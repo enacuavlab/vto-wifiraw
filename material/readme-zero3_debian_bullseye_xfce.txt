@@ -8,23 +8,16 @@ config/before.txt
 "
 connect_wi-fi Androidxp pprzpprz
 "
+
 --------------------------------------------------------------
-poweron
+Headless install
+
+--------------------------------------------------------------
+First boot with wifi to set static ethernet (Desktop static 192.168.3.1)
 => blinking led
 
 --------------------------------------------------------------
-Ethernet connection
--------------------
-static ip shall be configured with desktop GUI
-192.168.3.2
-255.255.255.0
-192.168.3.1
-
-ssh rock@192.168.3.2
-rock
-
---------------------------------------------------------------
-Wific connection
+Wifi connection
 -------------------
 ip address
 => 192.168.1.131
@@ -35,6 +28,75 @@ ssh rock@192.168.1.87
 rock
 
 --------------------------------------------------------------
+sudo vi /etc/NetworkManager/NetworkManager.conf
+"
+[ifupdown]
+managed=false
+"
+
+sudo vi /etc/NetworkManager/system-connections/Wired.nmconnection
+"
+[connection]
+id=Wired connection1
+uuid=d4bef1de-dde8-3892-b8c5-3f42a20b2c3d
+type=ethernet
+autoconnect-priority=-999
+interface-name=enxd0c0bf2f6e0b
+permissions=
+timestamp=1721292972
+
+[ethernet]
+mac-address-blacklist=
+
+[ipv4]
+address1=192.168.3.2/24,192.168.3.1
+dns=8.8.8.8;8.8.4.4;
+dns-search=
+method=manual
+
+[ipv6]
+addr-gen-mode=stable-privacy
+dns-search=
+method=disabled
+
+[proxy]
+"
+
+--------------------------------------------------------------
+sudo nmtui
+=> activate
+
+sudo nmcli connection show -a
+=>
+Wired connection 1  d4bef1de-dde8-3892-b8c5-3f42a20b2c3d  ethernet  enxd0c0bf2f6e0b 
+Androidxp           5f35dea4-6a28-4033-b2bb-f6f2801c40a9  wifi      wlan0           
+
+sudo nmcli device status
+=>
+enxd0c0bf2f6e0b  ethernet  connected     Wired connection 1 
+wlan0            wifi      connected     Androidxp    
+
+--------------------------------------------------------------
+sudo nmcli radio wifi off
+sudo nmcli device status
+=>
+enxd0c0bf2f6e0b  ethernet  connected    Wired connection 1 
+wlan0            wifi      unavailable  --                 
+p2p-dev-wlan0    wifi-p2p  unavailable  --                 
+usb0             ethernet  unmanaged    --                 
+lo               loopback  unmanaged    --    
+
+--------------------------------------------------------------
+Share wifi :
+
+sudo iptables -t nat -A POSTROUTING -o wlp59s0 -j MASQUERADE
+sudo iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -A FORWARD -i enx3c18a0d60a31 -o wlp59s0 -j ACCEPT
+sudo sysctl net.ipv4.ip_forward=1
+
+ssh rock@192.168.3.2
+rock
+
 sudo apt-get update
 
 sudo rsetup
@@ -43,45 +105,33 @@ Manage overlay
 Enable Raspberry Pi Camera v2
 Enable UART4-M1
 
-sudo reboot
-ssh rock@...
-
 sudo apt remove xfce4
 sudo apt remove xserver-xorg
 sudo apt autoremove
 
+--------------------------------------------------------------
 sudo reboot
-ssh rock@...
+ssh rock@192.168.3.2
+
+sudo nmtui
+change ethernet to enx3c18a0d60afa
 
 --------------------------------------------------------------
-gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw, width=640, height=480, framerate=30/1 ! mpph265enc ! rtph265pay name=pay0 pt=96 config-interval=1 mtu=1400 ! udpsink port=5600 host=192.168.1.131
+gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw, width=640, height=480, framerate=30/1 ! mpph265enc ! rtph265pay name=pay0 pt=96 config-interval=1 mtu=1400 ! udpsink port=5600 host=192.168.3.1
 (csi imx219 + usb webcam = OK)
 
 gst-launch-1.0 udpsrc port=5600 ! application/x-rtp, encoding-name=H265, payload=96 ! rtph265depay ! h265parse ! queue ! avdec_h265 !  videoconvert ! autovideosink sync=false 
 
 --------------------------------------------------------------
-git clone --recurse-submodules  http://github.com/enacuavlab/vto-wifiraw.git
+uname -a
+Linux radxa-zero3 5.10.160-26-rk356x #bfb9351f3 SMP Wed Jan 10 07:01:50 UTC 2024 aarch64 GNU/Linux
 
-vi vto-wifiraw/install.sh
-"
-if uname -a | grep -cs "radxa-zero3"> /dev/null 2>&1;then DKMS=true; fi
-"
+git clone --recurse-submodules  http://github.com/enacuavlab/vto-wifiraw.git
+cd vto-wifiraw
 ./install.sh
 
-vi vto-wifiraw/src/Makefile
-"
-  ifeq ($(UNAME_R),5.10.160-26-rk356x)
-    OSFLAG = -DUART=\"/dev/ttyS2\"
-"
-
-sudo apt-get install build-essential
-
-/usr/sbin/iwconfig
-
-sudo ip link set wlan0 down
-
-sudo ./wfb
-=> temp=64
+plug usb rtl8812au wifi adpater and check 
+/sbin/iwconfig
 
 --------------------------------------------------------------
 v4l2-ctl -d /dev/video9 --list-formats-ext
@@ -159,74 +209,3 @@ weston --version
 => 9.0.0
 
 systemd-run  --uid=1000 -p PAMName=login -p TTYPath=/dev/tty7 /usr/bin/weston
-
---------------------------------------------------------------
---------------------------------------------------------------
-sudo vi /etc/NetworkManager/NetworkManager.conf
-"
-[ifupdown]
-managed=false
-"
-
-sudo vi /etc/NetworkManager/system-connections/Wired.nmconnection
-"
-[connection]
-id=Wired connection 1
-#uuid=18b1c20b-e2f5-356c-9d12-707550d6ab47
-type=ethernet
-autoconnect-priority=-999
-interface-name=enx3c18a0d60afa
-#interface-name=enxd0c0bf2f6e0b
-permissions=
-timestamp=1687100327
-
-[ethernet]
-mac-address-blacklist=
-
-[ipv4]
-address1=192.168.3.2/24,192.198.3.1
-dns=8.8.8.8;8.8.4.4;
-dns-search=
-method=manual
-
-[ipv6]
-addr-gen-mode=stable-privacy
-dns-search=
-method=disabled
-
-[proxy]
-"
-
---------------------------------------------------------------
-Lemorele adapteur:
-interface-name=enxd0c0bf2f6e0b
-
---------------------------------------------------------------
-sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
-
---------------------------------------------------------------
-
-/usr/sbin/ifconfig
-=> wlan0
-
-sudo ip link set dev wlan1 down
-
-sudo iw wlxfc34972ed57c set type managed;sudo iw wlx7c10c91c408e set type managed;sudo ip link set wlxfc34972ed57c down;sudo ip link set wlx7c10c91c408e down
-
-sudo iw wlxfc34972ed57c set type monitor
-sudo ip link set wlxfc34972ed57c up
-sudo iw dev wlxfc34972ed57c set channel 13
-
-sudo iw wlx7c10c91c408e set type monitor
-sudo ip link set wlx7c10c91c408e up
-sudo iw dev wlx7c10c91c408e set channel 84
-
-clear;socat udp-listen:5000,reuseaddr,fork - | tee stdout.log
-
-
-sudo iw wlx68ca00012942 set type managed;sudo iw wlx68ca0001294c set type managed;sudo ip link set wlx68ca00012942 down;sudo ip link set wlx68ca0001294c down
-
-sudo iw wlx68ca00012942 set type monitor
-sudo ip link set wlx68ca00012942 up
-sudo iw dev wlx68ca00012942 set channel 0
-
