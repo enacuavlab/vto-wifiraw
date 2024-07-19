@@ -8,7 +8,7 @@ Type=idle
 RemainAfterExit=yes
 ExecStartPre=/bin/sleep 2
 ExecStart=TOBEUPDATEATINSTALLATION/scripts/wfb_on.sh
-ExecReload=TOBEUPDATEATINSTALLATION/scripts/wfb_on.sh
+#ExecReload=TOBEUPDATEATINSTALLATION/scripts/wfb_on.sh
 ExecStop=TOBEUPDATEATINSTALLATION/scripts/wfb_off.sh
 
 [Install]
