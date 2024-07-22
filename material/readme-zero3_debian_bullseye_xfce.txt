@@ -204,7 +204,23 @@ Boot
 ssh rock@192.168.3.2
 rock
 
-cd /home/rock
+-------------------------------------------------------------------------------
+sudo gparted 
+resize sdb3
+
+lsblk
+mmcblk1      179:0    0  29.7G  0 disk 
+├─mmcblk1p1  179:1    0    16M  0 part /config
+├─mmcblk1p2  179:2    0   300M  0 part /boot/efi
+└─mmcblk1p3  179:3    0   5.6G  0 part /
+mmcblk0      179:32   0  14.6G  0 disk 
+mmcblk0boot0 179:64   0     4M  1 disk 
+mmcblk0boot1 179:96   0     4M  1 disk 
+zram0        254:0    0 991.8M  0 disk [SWAP]
+
+
+rock@radxa-zero3:~$ 
+
 
 
 tar xvf root.tar /dev/
