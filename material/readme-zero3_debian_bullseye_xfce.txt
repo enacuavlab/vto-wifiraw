@@ -66,6 +66,8 @@ method=disabled
 sudo nmtui
 => activate
 
+reboot
+
 sudo nmcli connection show -a
 =>
 Wired connection 1  d4bef1de-dde8-3892-b8c5-3f42a20b2c3d  ethernet  enxd0c0bf2f6e0b 
