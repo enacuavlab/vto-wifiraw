@@ -6,6 +6,14 @@ PIDFILE=$1
 #------------------------------------------------------------------------------
 # ON BOARD
 #--------------------------------------------------
+# RADXA ZERO 3W
+#--------------------------------
+# OPERATIONAL
+gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw, width=1920, height=1080, framerate=30/1, format='NV12' ! mpph265enc rc-mode=vbr bps=3000000 bps-max=3172000  ! rtph265pay name=pay0 pt=96 config-interval=1 mtu=1400 ! udpsink port=5600 host=127.0.0.1 2>&1 &
+
+gst-launch-1.0 v4l2src device=/dev/video9 ! video/x-raw, width=1280, height=740, framerate=10/1 ! videoscale ! video/x-raw, width=1280, height=736, framerate=10/1 ! mpph265enc rc-mode=vbr bps=3000000 bps-max=3172000 ! rtph265pay name=pay0 pt=96 config-interval=1 mtu=1400 ! udpsink port=5700 host=127.0.0.1 2>&1 &
+
+#--------------------------------------------------
 # NVIDIA
 #--------------------------------
 # OPERATIONAL
