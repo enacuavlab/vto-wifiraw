@@ -177,6 +177,39 @@ python3 -m pip install pyserial
 
 
 -------------------------------------------------------------------------------
+sudo mount /dev/sdb3 /media/pprz/rootfs/
+cd /media/pprz/rootfs/etc/NetworkManager/system-connections
+sudo vi Wired connection 1.nmconnection
+"
+uuid=d4bef1de-dde8-3892-b8c5-3f42a20b2c3d
+interface-name=enx3c18a0d60afa
+"
+to
+"
+#uuid=d4bef1de-dde8-3892-b8c5-3f42a20b2c3d
+interface-name=enxd0c0bf2f6e0b
+"
+
+cd /media/pprz
+sudo tar cvf roofs.tar rootfs/*
+=> 5G
+sudo mv roofs.tar /media/pprz/rootfs/home/rock
+cd 
+sudo umount /media/pprz/*
+sync
+
+Boot
+ssh rock@192.168.3.2
+rock
+
+cd /home/rock
+
+
+tar xvf root.tar /dev/
+
+
+
+-------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 Trying to display (but not priority)
 
