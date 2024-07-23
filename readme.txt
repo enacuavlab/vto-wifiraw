@@ -45,12 +45,13 @@ socat udp-listen:5000,reuseaddr,fork -
 rsync -vP --bwlimit=5000  $USER@10.0.1.2:/tmp/100M.log .
 (openssl rand 102400000 > /tmp/100M.log)
 
-4) Video streaming (h264 parsing mtu range 400,1400)
-gst-launch-1.0 udpsrc port=5600 ! application/x-rtp, encoding-name=H264, payload=96 ! \
-rtph264depay ! h264parse ! queue ! avdec_h264 !  videoconvert ! autovideosink sync=false
+4) Video streaming (h265 parsing mtu range 400,1400)
+gst-launch-1.0 udpsrc port=5600 ! application/x-rtp, encoding-name=H265, payload=96 ! \
+rtph265depay ! h265parse ! queue ! avdec_h265 !  videoconvert ! autovideosink sync=false
 
 5) Telemetry-datalink
 link_py.py -d /dev/ttyUSB0 -t xbee -s 57600 -ac 122:127.0.0.1:4244:4245
+(python3 -m pip install pyserial)
 
 6) Payload-datalink
 socat udp-listen:5800,reuseaddr,fork -
