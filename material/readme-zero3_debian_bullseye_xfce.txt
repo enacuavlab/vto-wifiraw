@@ -64,6 +64,8 @@ sudo nmtui
 => activate
 
 reboot
+ssh rock@192.168.3.2
+rock
 
 sudo nmcli connection show -a
 =>
@@ -75,7 +77,6 @@ sudo nmcli device status
 enxd0c0bf2f6e0b  ethernet  connected     Wired connection 1 
 wlan0            wifi      connected     Androidxp    
 
---------------------------------------------------------------
 sudo nmcli radio wifi off
 sudo nmcli device status
 =>
