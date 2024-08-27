@@ -38,10 +38,7 @@ sudo vi /etc/NetworkManager/system-connections/Wired.nmconnection
 "
 [connection]
 id=Wired connection1
-uuid=d4bef1de-dde8-3892-b8c5-3f42a20b2c3d
 type=ethernet
-autoconnect-priority=-999
-interface-name=enxd0c0bf2f6e0b
 permissions=
 timestamp=1721292972
 
