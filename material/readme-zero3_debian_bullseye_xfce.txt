@@ -28,38 +28,18 @@ ssh rock@192.168.1.87
 rock
 
 --------------------------------------------------------------
-sudo vi /etc/NetworkManager/NetworkManager.conf
+sudo nmtui
 "
-[ifupdown]
-managed=false
-"
-
-sudo vi /etc/NetworkManager/system-connections/Wired.nmconnection
-"
-[connection]
-id=Wired connection1
-type=ethernet
-permissions=
-timestamp=1721292972
-
-[ethernet]
-mac-address-blacklist=
-
-[ipv4]
-address1=192.168.3.2/24,192.168.3.1
-dns=8.8.8.8;8.8.4.4;
-dns-search=
-method=manual
-
-[ipv6]
-addr-gen-mode=stable-privacy
-dns-search=
-method=disabled
-
-[proxy]
+Profile name Ethernetconnection1
+Device 
+IPV4 CONFIGURATION <Manual>
+Addresse 192.168.3.2/24
+Gateway 192.168.3.1
+DNS Servers 8.8.8.8
+            8.8.4.4            
+IPV6 CONFIGURATION <Disabled>     
 "
 
---------------------------------------------------------------
 sudo nmtui
 => activate
 
@@ -108,13 +88,6 @@ Enable UART4-M1
 sudo apt remove xfce4
 sudo apt remove xserver-xorg
 sudo apt autoremove
-
---------------------------------------------------------------
-sudo reboot
-ssh rock@192.168.3.2
-
-sudo nmtui
-change ethernet to enx3c18a0d60afa
 
 --------------------------------------------------------------
 gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw, width=640, height=480, framerate=30/1 ! mpph265enc ! rtph265pay name=pay0 pt=96 config-interval=1 mtu=1400 ! udpsink port=5600 host=192.168.3.1
