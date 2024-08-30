@@ -26,7 +26,7 @@ ROLE := GROUND
 
 make
 
-reboot
+And set suitable video stream for BOARD in scripts/video.sh
 
 -------------------------------------------------------------------------------
 Usages:
