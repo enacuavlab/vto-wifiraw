@@ -71,12 +71,10 @@ if uname -a | grep -cs "Ubuntu"> /dev/null 2>&1; then
   fi
 fi
 #sudo cp $PROJ/material/8812au.conf /etc/modprobe.d
-sudo cp $PROJ/material/60-wfb.rules /etc/udev/rules.d
-for f in $PROJ/material/wfb.service $PROJ/scripts/wfb_on.sh; do
+for f in $PROJ/material/60-wfb.rules $PROJ/material/wfb.service $PROJ/scripts/wfb_on.sh $PROJ/scripts/wfb_usb.sh; do
   sed -i 's#TOBEUPDATEATINSTALLATION#'$PROJ'#' ${f};
   echo ${f};
 done;
+sudo cp $PROJ/material/60-wfb.rules /etc/udev/rules.d
 sudo cp $PROJ/material/wfb.service /etc/systemd/system
 sudo udevadm control --reload-rules
-sudo systemctl enable wfb.service
-sudo systemctl start wfb.service
