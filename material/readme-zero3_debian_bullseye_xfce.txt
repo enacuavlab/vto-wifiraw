@@ -154,56 +154,142 @@ python3 -m pip install pyserial
 /home/pprz/Projects/paparazzi/sw/ground_segment/tmtc/messages
 )
 
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+USING EMMC 
+----------------------------------------------------------------
+1) From operational micro sd build and set above extract file image
+--------------
+sudo gparted /dev/sdb
+shrink
+sudo gdisk -l /dev/sdb
+=>
+Sector size (logical/physical): 512/512 bytes
+...
+Number  Start (sector)    End (sector)  Size       Code  Name
+   1           32768           65535   16.0 MiB    0700  config
+   2           65536          679935   300.0 MiB   EF00  boot
+   3          679936        11149311   5.0 GiB     EF00  rootfs
+
+11149311 + 1 + 33 = 11149345 (size including GPT tail header)
+
+sudo dd if=/dev/sdb of=sd.img bs=512 count=11149345 status=progress
+=>
+5708464640 bytes (5,7 GB, 5,3 GiB) copied, 378,95 s, 15,1 MB/s
+5,4G sd.img
+
+sudo gdisk sd.img
+...
+  GPT: damaged
+
+Command
+r : Recovery/transformation command
+d : use main GPT header (rebuilding backup)
+w : write table to disk and exit
+Y
+
+sudo gdisk sd.img
+...
+  GPT: present
+
+sudo gparted sd.img
+
+BalenaEtcher sd.img to new /dev/sdb
+
+sudo gparted
+
+Not all of the space available to /dev/sdb appears to be used, 
+you can fix the GPT to use all of the space (an extra 51371999 blocks) 
+or continue with the current setting? 
+
+Continue
 
 -------------------------------------------------------------------------------
-sudo mount /dev/sdb3 /media/pprz/rootfs/
-cd /media/pprz/rootfs/etc/NetworkManager/system-connections
-sudo vi Wired connection 1.nmconnection
-"
-uuid=d4bef1de-dde8-3892-b8c5-3f42a20b2c3d
-interface-name=enx3c18a0d60afa
-"
-to
-"
-#uuid=d4bef1de-dde8-3892-b8c5-3f42a20b2c3d
-interface-name=enxd0c0bf2f6e0b
-"
+2) From extract file image build new SD containing file image to be written in EMMC
+--------------
+gparted /dev/sdb
+Fix size
+Encrease size to host image (+ 5Gb)
+Copy image in /dev/sdb
 
-cd /media/pprz
-sudo tar cvf roofs.tar rootfs/*
-=> 5G
-sudo mv roofs.tar /media/pprz/rootfs/home/rock
-cd 
-sudo umount /media/pprz/*
-sync
-
-Boot
+move SD in Zero3W and boot
 ssh rock@192.168.3.2
-rock
+lsblk
+=>
+mmcblk1
+mmcblk0
+
+sudo dd if=sd.img of=/dev/mmcblk0 bs=512  status=progress
+=>
+5708464640 bytes (5.7 GB, 5.3 GiB) copied, 536.468 s, 10.6 MB/s
+
+sudo poweroff
+remove SD
 
 -------------------------------------------------------------------------------
-sudo gparted 
-resize sdb3
+3) Extend EMMC
+--------
+ssh rock@192.168.3.2
+sudo parted
+=> Using /dev/mmcblk0
+print
+Warning: Not all of the space available to /dev/mmcblk0 appears to be used,
+you can fix the GPT to use all of thespace (an extra 19386335 blocks)
+or continue with the current setting?
+Fix/Ignore?
+Fix
+
+sudo parted /dev/mmcblk0 print free
+=>
+Number  Start   End     Size    File system  Name    Flags
+        17.4kB  16.8MB  16.8MB  Free Space
+ 1      16.8MB  33.6MB  16.8MB  fat32        config  msftdata
+ 2      33.6MB  348MB   315MB   fat32        boot    boot, esp
+ 3      348MB   5708MB  5360MB  ext4         rootfs  boot, esp
+        5708MB  15.6GB  9926MB  Free Space
+
+
+sudo parted /dev/mmcblk0 resizepart
+Partition number? 3
+Warning: Partition /dev/mmcblk0p3 is being used. Are you sure you want to continue?
+Yes/No? yes
+End?  [5708MB]? 15.6GB
+Information: You may need to update /etc/fstab.
+
+sudo parted /dev/mmcblk0 print free
+=>
+...
+ 3      348MB   15.6GB  15.3GB  ext4         rootfs  boot, esp
+
+sudo resize2fs  /dev/mmcblk0p3
+df -h
+=>
+/dev/mmcblk0p3   14G  4.1G  9.3G  31% /
+
+-------------------------------------------------------------------------------
+3) Boot from SD or EMMC
+-----------------------
+If EMMC is bootable it will boot from EMMC and not SD.
+To force boot from SD, make EMMC unbootable.
+
+sudo rkdeveloptool ef
+Starting to erase flash...
+Getting flash info from device failed!
+
+without SD
 
 lsblk
-mmcblk1      179:0    0  29.7G  0 disk 
-├─mmcblk1p1  179:1    0    16M  0 part /config
-├─mmcblk1p2  179:2    0   300M  0 part /boot/efi
-└─mmcblk1p3  179:3    0   5.6G  0 part /
-mmcblk0      179:32   0  14.6G  0 disk 
-mmcblk0boot0 179:64   0     4M  1 disk 
-mmcblk0boot1 179:96   0     4M  1 disk 
-zram0        254:0    0 991.8M  0 disk [SWAP]
+=> mmcblk0
 
+sudo dd if=/dev/zero of=/dev/mmcblk0 bs=1M count=1000 status=progress
+=>
+1044381696 bytes (1.0 GB, 996 MiB) copied, 7 s, 149 MB/s
 
-rock@radxa-zero3:~$ 
+poweroff
+Plug SD
+poweron
 
-
-
-tar xvf root.tar /dev/
-
-
-
+-------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 Trying to display (but not priority)
