@@ -1,8 +1,8 @@
-WFB : rtl8812au already in riek. Todo start at boot
+WFB : OK (rtl8812au already in riek)
 WAYLAND ?
 VPU : OK
 GPU ?
-CAMERA : missing rkaiq server
+CAMERA : Green image, missing rkaiq server
 UART ?
 
 ---------------------------------------------------------------
@@ -208,6 +208,8 @@ reboot
 nmcli radio wifi
 => disabled
 
+sudo touch /etc/cloud/cloud-init.disabled
+
 Plug Asus USB adpater AC56
 dmesg -w
 => detected and driver rtl88XXau loaded
@@ -218,8 +220,6 @@ git clone --recurse-submodules  http://github.com/enacuavlab/vto-wifiraw.git
 cd vto-wifiraw
 comment rtl8812au driver installation in
 install.sh
-
-Start at boot missing second usb detection !
 
 --------------------------------------------------
 --------------------------------------------------
