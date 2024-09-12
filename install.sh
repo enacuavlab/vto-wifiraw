@@ -71,7 +71,7 @@ if uname -a | grep -cs "Ubuntu"> /dev/null 2>&1; then
   fi
 fi
 #sudo cp $PROJ/material/8812au.conf /etc/modprobe.d
-for f in $PROJ/material/60-wfb.rules $PROJ/material/wfb.service $PROJ/scripts/wfb_on.sh $PROJ/scripts/wfb_usb.sh; do
+for f in $PROJ/material/60-wfb.rules $PROJ/material/wfb.service $PROJ/scripts/wfb_on.sh; do
   sed -i 's#TOBEUPDATEATINSTALLATION#'$PROJ'#' ${f};
   echo ${f};
 done;
