@@ -1,7 +1,5 @@
 #!/bin/bash
 
-HOME_PRJ=TOBEUPDATEATINSTALLATION 
-
 USBFILE=/tmp/wfb.usb
 PIDFILE=/tmp/wfb.pid
 
