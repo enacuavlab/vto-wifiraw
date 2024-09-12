@@ -40,6 +40,7 @@ ssh $USER@10.0.1.2
 
 2) Wfb logs
 socat udp-listen:5000,reuseaddr,fork -
+nc -u -vv -l 5000
 
 3) File transfert (tunnel mtu range 700,1400)
 rsync -vP --bwlimit=5000  $USER@10.0.1.2:/tmp/100M.log .
