@@ -40,6 +40,8 @@ OSFLAG :=
     UNAME_R := $(shell uname -r)
     ifeq ($(UNAME_R),5.10.160-26-rk356x)
       OSFLAG += -DUART=\"/dev/ttyS4\"
+    else ifeq ($(UNAME_R),6.1.0-1025-rockchip)
+      OSFLAG += -DUART=\"/dev/ttyS4\"
     else ifeq ($(UNAME_R),5.10.160-legacy-rk35xx)
       OSFLAG += -DUART=\"/dev/ttyS7\"
     else ifeq ($(UNAME_R),4.9.253-tegra)
