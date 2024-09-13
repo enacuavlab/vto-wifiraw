@@ -67,7 +67,7 @@ https://github.com/Joshua-Riek/ubuntu-rockchip/wiki/Ubuntu-24.04-LTS
 
 /etc/default/u-boot
 "
-U_BOOT_FDT_OVERLAYS="device-tree/rockchip/overlay/radxa-zero3-rpi-camera-v2.dtbo device-tree/rockchip/overlay/radxa-zero3-disabled-wireless.dtbo"
+U_BOOT_FDT_OVERLAYS="device-tree/rockchip/overlay/radxa-zero3-rpi-camera-v2.dtbo device-tree/rockchip/overlay/radxa-zero3-disabled-wireless.dtbo device-tree/rockchip/overlay/rk3588-uart4-m0.dtbo"
 "
 sudo u-boot-update
 (/boot/extlinux/extlinux.conf)
