@@ -7,7 +7,7 @@ UART ?
 
 ---------------------------------------------------------------
 
-!! BOARD WILL BURN IF USING USB-C CONNECTOR AND 5V3A ... !!
+!! BOARD WILL BURN WHEN USING USB-C CONNECTOR TO POWER 5V3A ... !!
 
 ---------------------------------------------------------------
 https://github.com/Joshua-Riek/ubuntu-rockchip
@@ -70,6 +70,7 @@ https://github.com/Joshua-Riek/ubuntu-rockchip/wiki/Ubuntu-24.04-LTS
 U_BOOT_FDT_OVERLAYS="device-tree/rockchip/overlay/radxa-zero3-rpi-camera-v2.dtbo"
 "
 sudo u-boot-update
+(/boot/extlinux/extlinux.conf)
 
 reboot
 
