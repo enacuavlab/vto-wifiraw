@@ -233,6 +233,8 @@ bool wfb_utils_init(uint8_t rawcpt,wfb_utils_t *param) {
   struct sock_filter full_bytecode = BPF_STMT(BPF_RET | BPF_K, (u_int)-1);
   struct sock_fprog full_program = { 1, &full_bytecode};
   if (-1 == setsockopt(param->fd, SOL_SOCKET, SO_ATTACH_FILTER, &full_program, sizeof(full_program))) ret=false;
+  static const int32_t sock_qdisc_bypass = 1;
+  if (-1 == setsockopt(param->fd, SOL_PACKET, PACKET_QDISC_BYPASS, &sock_qdisc_bypass, sizeof(sock_qdisc_bypass))) ret=false;
   build_crc32_table();
 
   return(ret);
