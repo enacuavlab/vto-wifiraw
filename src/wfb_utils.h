@@ -103,14 +103,56 @@ static uint8_t ieeehdr[] = {
 };
 
 #if RAW
+/************************************************************************************************/
+/*
+#define RATE_CODE 0x02 // 1 M
+#define RATE_CODE 0x04 //  2 M
+*/
+#define RATE_CODE 0x0b //  5 M
+/*
+#define RATE_CODE 0x0c //  6 M
+#define RATE_CODE 0x16 // 11 M
+#define RATE_CODE 0x18 // 12 M
+#define RATE_CODE 0x24 // 18 M
+#define RATE_CODE 0x30 // 24 M
+#define RATE_CODE 0x48 // 36 M
+#define RATE_CODE 0x60 // 48 M
+*/
 static uint8_t radiotaphdr[] =  {
   0x00, 0x00,             // radiotap version
   0x0d, 0x00,             // radiotap header length
   0x00, 0x80, 0x08, 0x00, // radiotap present flags:  RADIOTAP_TX_FLAGS + RADIOTAP_MCS
   0x08, 0x00,             // RADIOTAP_F_TX_NOACK
-  0x07, 0x00, 0x02,       // MCS flags (0x07), 0x0, rate index (0x05)
+  0x07, 0x00, RATE_CODE,  // MCS flags (0x07), 0x0, rate index (0x05)
 };
+/*
+#define IEEE80211_RADIOTAP_MCS_HAVE_BW    0x01
+#define IEEE80211_RADIOTAP_MCS_HAVE_MCS   0x02
+#define IEEE80211_RADIOTAP_MCS_HAVE_GI    0x04
+ 
+#define IEEE80211_RADIOTAP_MCS_HAVE_STBC  0x20
 
+#define IEEE80211_RADIOTAP_MCS_BW_20    0
+#define IEEE80211_RADIOTAP_MCS_SGI      0x04
+
+#define IEEE80211_RADIOTAP_MCS_STBC_1  1
+#define IEEE80211_RADIOTAP_MCS_STBC_SHIFT 5
+
+#define MCS_KNOWN (IEEE80211_RADIOTAP_MCS_HAVE_MCS | IEEE80211_RADIOTAP_MCS_HAVE_BW | IEEE80211_RADIOTAP_MCS_HAVE_GI | IEEE80211_RADIOTAP_MCS_HAVE_STBC )
+
+#define MCS_FLAGS  (IEEE80211_RADIOTAP_MCS_BW_20 | IEEE80211_RADIOTAP_MCS_SGI | (IEEE80211_RADIOTAP_MCS_STBC_1 << IEEE80211_RADIOTAP_MCS_STBC_SHIFT))
+
+#define MCS_INDEX  0
+
+static uint8_t radiotaphdr[] = {
+    0x00, 0x00, // <-- radiotap version
+    0x0d, 0x00, // <- radiotap header length
+    0x00, 0x80, 0x08, 0x00, // <-- radiotap present flags:  RADIOTAP_TX_FLAGS + RADIOTAP_MCS
+    0x08, 0x00,  // RADIOTAP_F_TX_NOACK
+    MCS_KNOWN , MCS_FLAGS, MCS_INDEX // bitmap, flags, mcs_index
+};
+*/
+/************************************************************************************************/
 
 // ONLINE_MTU on RAW receveiver should be large enought to retrieve variable size radiotap header
 #define RADIOTAP_HEADER_MAX_SIZE 50
