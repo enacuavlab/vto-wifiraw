@@ -208,34 +208,36 @@ bool wfb_utils_init(uint8_t rawcpt,wfb_utils_t *param) {
     }
   }
 
-  uint8_t flags;
-  uint16_t protocol = htons(ETH_P_ALL);
-  if (-1 == (param->fd = socket(AF_PACKET,SOCK_RAW,protocol))) exit(-1);
-  if (-1 == (flags = fcntl(param->fd, F_GETFL))) exit(-1);
-  if (-1 == (fcntl(param->fd, F_SETFL, flags | O_NONBLOCK))) exit(-1);
-  struct sock_filter zero_bytecode = BPF_STMT(BPF_RET | BPF_K, 0);
-  struct sock_fprog zero_program = { 1, &zero_bytecode};
-  if (-1 == setsockopt(param->fd, SOL_SOCKET, SO_ATTACH_FILTER, &zero_program, sizeof(zero_program))) exit(-1);
-  struct ifreq ifr;
-  memset(&ifr, 0, sizeof(struct ifreq));
-  strncpy( ifr.ifr_name, param->name, sizeof( ifr.ifr_name ) - 1 );
-  if (ioctl( param->fd, SIOCGIFINDEX, &ifr ) < 0 ) exit(-1);
-  struct sockaddr_ll sll;
-  memset( &sll, 0, sizeof( sll ) );
-  sll.sll_family   = AF_PACKET;
-  sll.sll_ifindex  = ifr.ifr_ifindex;
-  sll.sll_protocol = protocol;
-  if (-1 == bind(param->fd, (struct sockaddr *)&sll, sizeof(sll))) exit(-1);
-  char drain[1];
-  while (recv(param->fd, drain, sizeof(drain), MSG_DONTWAIT) >= 0) {
-    printf("----\n");
-  };
-  struct sock_filter full_bytecode = BPF_STMT(BPF_RET | BPF_K, (u_int)-1);
-  struct sock_fprog full_program = { 1, &full_bytecode};
-  if (-1 == setsockopt(param->fd, SOL_SOCKET, SO_ATTACH_FILTER, &full_program, sizeof(full_program))) ret=false;
-  static const int32_t sock_qdisc_bypass = 1;
-  if (-1 == setsockopt(param->fd, SOL_PACKET, PACKET_QDISC_BYPASS, &sock_qdisc_bypass, sizeof(sock_qdisc_bypass))) ret=false;
-  build_crc32_table();
+  if (ret) {
+    uint8_t flags;
+    uint16_t protocol = htons(ETH_P_ALL);
+    if (-1 == (param->fd = socket(AF_PACKET,SOCK_RAW,protocol))) exit(-1);
+    if (-1 == (flags = fcntl(param->fd, F_GETFL))) exit(-1);
+    if (-1 == (fcntl(param->fd, F_SETFL, flags | O_NONBLOCK))) exit(-1);
+    struct sock_filter zero_bytecode = BPF_STMT(BPF_RET | BPF_K, 0);
+    struct sock_fprog zero_program = { 1, &zero_bytecode};
+    if (-1 == setsockopt(param->fd, SOL_SOCKET, SO_ATTACH_FILTER, &zero_program, sizeof(zero_program))) exit(-1);
+    struct ifreq ifr;
+    memset(&ifr, 0, sizeof(struct ifreq));
+    strncpy( ifr.ifr_name, param->name, sizeof( ifr.ifr_name ) - 1 );
+    if (ioctl( param->fd, SIOCGIFINDEX, &ifr ) < 0 ) exit(-1);
+    struct sockaddr_ll sll;
+    memset( &sll, 0, sizeof( sll ) );
+    sll.sll_family   = AF_PACKET;
+    sll.sll_ifindex  = ifr.ifr_ifindex;
+    sll.sll_protocol = protocol;
+    if (-1 == bind(param->fd, (struct sockaddr *)&sll, sizeof(sll))) exit(-1);
+    char drain[1];
+    while (recv(param->fd, drain, sizeof(drain), MSG_DONTWAIT) >= 0) {
+      printf("----\n");
+    };
+    struct sock_filter full_bytecode = BPF_STMT(BPF_RET | BPF_K, (u_int)-1);
+    struct sock_fprog full_program = { 1, &full_bytecode};
+    if (-1 == setsockopt(param->fd, SOL_SOCKET, SO_ATTACH_FILTER, &full_program, sizeof(full_program))) ret=false;
+    static const int32_t sock_qdisc_bypass = 1;
+    if (-1 == setsockopt(param->fd, SOL_PACKET, PACKET_QDISC_BYPASS, &sock_qdisc_bypass, sizeof(sock_qdisc_bypass))) ret=false;
+    build_crc32_table();
+  }
 
   return(ret);
   nla_put_failure:

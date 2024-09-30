@@ -107,9 +107,7 @@ static uint8_t ieeehdr[] = {
 /*
 #define RATE_CODE 0x02 // 1 M
 #define RATE_CODE 0x04 //  2 M
-*/
 #define RATE_CODE 0x0b //  5 M
-/*
 #define RATE_CODE 0x0c //  6 M
 #define RATE_CODE 0x16 // 11 M
 #define RATE_CODE 0x18 // 12 M
@@ -117,7 +115,7 @@ static uint8_t ieeehdr[] = {
 #define RATE_CODE 0x30 // 24 M
 #define RATE_CODE 0x48 // 36 M
 #define RATE_CODE 0x60 // 48 M
-*/
+
 static uint8_t radiotaphdr[] =  {
   0x00, 0x00,             // radiotap version
   0x0d, 0x00,             // radiotap header length
@@ -125,7 +123,7 @@ static uint8_t radiotaphdr[] =  {
   0x08, 0x00,             // RADIOTAP_F_TX_NOACK
   0x07, 0x00, RATE_CODE,  // MCS flags (0x07), 0x0, rate index (0x05)
 };
-/*
+*/
 #define IEEE80211_RADIOTAP_MCS_HAVE_BW    0x01
 #define IEEE80211_RADIOTAP_MCS_HAVE_MCS   0x02
 #define IEEE80211_RADIOTAP_MCS_HAVE_GI    0x04
@@ -142,7 +140,7 @@ static uint8_t radiotaphdr[] =  {
 
 #define MCS_FLAGS  (IEEE80211_RADIOTAP_MCS_BW_20 | IEEE80211_RADIOTAP_MCS_SGI | (IEEE80211_RADIOTAP_MCS_STBC_1 << IEEE80211_RADIOTAP_MCS_STBC_SHIFT))
 
-#define MCS_INDEX  0
+#define MCS_INDEX  1
 
 static uint8_t radiotaphdr[] = {
     0x00, 0x00, // <-- radiotap version
@@ -151,7 +149,7 @@ static uint8_t radiotaphdr[] = {
     0x08, 0x00,  // RADIOTAP_F_TX_NOACK
     MCS_KNOWN , MCS_FLAGS, MCS_INDEX // bitmap, flags, mcs_index
 };
-*/
+
 /************************************************************************************************/
 
 // ONLINE_MTU on RAW receveiver should be large enought to retrieve variable size radiotap header

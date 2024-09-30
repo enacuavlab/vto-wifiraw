@@ -1,0 +1,86 @@
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+rsync gst-launch-1.0 videotestsrc ! video/x-raw,width=1280,height=720,framerate=30/1  ! timeoverlay !  openh264enc bitrate=16000000 max-bitrate=16000000  !  video/x-h264,level="(string)4" ! rtph264pay mtu=1400 config-interval=-1 ! udpsink port=5600 host=127.0.0.1
+-vP --bwlimit=5000  10.0.1.1:/tmp/100M.log .
+
+#define MCS_INDEX  0
+
+sent 70.936 bytes  received 102.425.080 bytes  615.591,69 bytes/sec
+
+-------------------------------------------------------------------------------
+#define MCS_INDEX  1
+
+sent 43 bytes  received 102.425.080 bytes  1.107.298,63 bytes/sec
+
+-------------------------------------------------------------------------------
+#define MCS_INDEX  2
+
+sent 43 bytes  received 102.425.080 bytes  1.272.361,78 bytes/sec
+
+-------------------------------------------------------------------------------
+#define MCS_INDEX  3
+
+sent 43 bytes  received 102.425.080 bytes  1.845.497,71 bytes/sec
+
+-------------------------------------------------------------------------------
+#define MCS_INDEX  4
+
+sent 43 bytes  received 102.425.080 bytes  2.028.220,26 bytes/sec
+
+-------------------------------------------------------------------------------
+#define MCS_INDEX  5
+
+sent 43 bytes  received 102.425.080 bytes  2.301.688,16 bytes/sec
+
+-------------------------------------------------------------------------------
+#define MCS_INDEX  6
+(#define MCS_INDEX  7)
+
+sent 43 bytes  received 102.425.080 bytes  2.468.075,25 bytes/sec
+
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+gst-launch-1.0 udpsrc port=5600 ! application/x-rtp, encoding-name=H264, payload=96 ! rtph264depay ! h264parse ! queue ! avdec_h264 ! videoconvert ! autovideosink sync=false
+
+--------------------------------------------------------------------------------
+gst-launch-1.0 videotestsrc ! video/x-raw,width=1280,height=720,framerate=30/1  ! timeoverlay !  openh264enc bitrate=4000000 max-bitrate=4000000  !  video/x-h264,level="(string)4" ! rtph264pay mtu=1400 config-interval=-1 ! udpsink port=5600 host=127.0.0.1
+
+#define RATE_CODE 0x16 // 11 M
+or
+#define MCS_INDEX  0
+(6.5)
+
+--------------------------------------------------------------------------------
+gst-launch-1.0 videotestsrc ! video/x-raw,width=1280,height=720,framerate=30/1  ! timeoverlay !  openh264enc bitrate=8000000 max-bitrate=8000000  !  video/x-h264,level="(string)4" ! rtph264pay mtu=1400 config-interval=-1 ! udpsink port=5600 host=127.0.0.1
+
+#define MCS_INDEX  1
+(13)
+
+--------------------------------------------------------------------------------
+gst-launch-1.0 videotestsrc ! video/x-raw,width=1280,height=720,framerate=30/1  ! timeoverlay !  openh264enc bitrate=12000000 max-bitrate=12000000  !  video/x-h264,level="(string)4" ! rtph264pay mtu=1400 config-interval=-1 ! udpsink port=5600 host=127.0.0.1
+
+#define MCS_INDEX  2
+(19.5)
+
+--------------------------------------------------------------------------------
+gst-launch-1.0 videotestsrc ! video/x-raw,width=1280,height=720,framerate=30/1  ! timeoverlay !  openh264enc bitrate=16000000 max-bitrate=16000000  !  video/x-h264,level="(string)4" ! rtph264pay mtu=1400 config-interval=-1 ! udpsink port=5600 host=127.0.0.1
+
+#define MCS_INDEX  3
+(26)
+
+--------------------------------------------------------------------------------
+#define MCS_INDEX  4
+(39)
+--------------------------------------------------------------------------------
+#define MCS_INDEX  5
+(52)
+--------------------------------------------------------------------------------
+#define MCS_INDEX  6
+(58.5)
+
+--------------------------------------------------------------------------------
+gst-launch-1.0 udpsrc port=5700 ! application/x-rtp, encoding-name=H264, payload=96 ! rtph264depay ! h264parse ! queue ! avdec_h264 ! videoconvert ! autovideosink sync=false
+
+v4l2-ctl -d /dev/video0 --list-formats-ext
+
+gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480,framerate=30/1  ! timeoverlay ! videoconvert !  openh264enc bitrate=1000000 ! rtph264pay mtu=1400 config-interval=-1 ! udpsink port=5700 host=127.0.0.1

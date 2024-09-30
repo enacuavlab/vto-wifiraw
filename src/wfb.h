@@ -19,7 +19,7 @@
 #define PORT_LOCAL_WFB	5000
 
 /*****************************************************************************/
-static void wfb_addusr(wfb_utils_t *param, uint16_t maxfd[], fd_set readset[]) {
+static void wfb_addusr(wfb_utils_t *param, uint8_t cptfdstart, uint16_t maxfd[], fd_set readset[]) {
   uint8_t dev;
   struct ifreq ifr;
 
@@ -62,7 +62,7 @@ static void wfb_addusr(wfb_utils_t *param, uint16_t maxfd[], fd_set readset[]) {
   if (ioctl( fd_tun_udp, SIOCSIFMTU, &ifr ) < 0 ) exit(-1);
   ifr.ifr_flags = IFF_UP ;
   if (ioctl( fd_tun_udp, SIOCSIFFLAGS, &ifr ) < 0 ) exit(-1);
-  for (int i=0;i<3;i++) {
+  for (int i=cptfdstart;i<3;i++) {
     FD_SET(param[dev].fd, &readset[i]);
     if (param[dev].fd > maxfd[i]) maxfd[i] = param[dev].fd;
   }
@@ -76,7 +76,7 @@ static void wfb_addusr(wfb_utils_t *param, uint16_t maxfd[], fd_set readset[]) {
   addr.sin_port = htons(5600);
   addr.sin_addr.s_addr = inet_addr(ADDR_LOCAL);
   if (-1 == bind(param[dev].fd, (struct sockaddr *)&addr, sizeof(addr))) exit(-1);
-  for (int i=0;i<3;i++) {
+  for (int i=cptfdstart;i<3;i++) {
     FD_SET(param[dev].fd, &readset[i]);
     if (param[dev].fd > maxfd[i]) maxfd[i] = param[dev].fd;
   }
@@ -95,7 +95,7 @@ static void wfb_addusr(wfb_utils_t *param, uint16_t maxfd[], fd_set readset[]) {
   addr.sin_port = htons(5700);
   addr.sin_addr.s_addr = inet_addr(ADDR_LOCAL);
   if (-1 == bind(param[dev].fd, (struct sockaddr *)&addr, sizeof(addr))) exit(-1);
-  for (int i=0;i<3;i++) {
+  for (int i=cptfdstart;i<3;i++) {
     FD_SET(param[dev].fd, &readset[i]);
     if (param[dev].fd > maxfd[i]) maxfd[i] = param[dev].fd;
   }
@@ -129,7 +129,7 @@ static void wfb_addusr(wfb_utils_t *param, uint16_t maxfd[], fd_set readset[]) {
   param[dev].addr_out[0].sin_family = AF_INET;
   param[dev].addr_out[0].sin_port = htons(4244);
   param[dev].addr_out[0].sin_addr.s_addr = inet_addr(ADDR_LOCAL);
-  for (int i=0;i<3;i++) {
+  for (int i=cptfdstart;i<3;i++) {
     FD_SET(param[dev].fd, &readset[i]);
     if (param[dev].fd > maxfd[i]) maxfd[i] = param[dev].fd;
   }
