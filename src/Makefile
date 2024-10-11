@@ -1,8 +1,11 @@
 #ROLE := BOARD
 ROLE := GROUND
 
-OPT_TELEM := TELEM
-#OPT_TELEM :=
+#OPT_TELEM := TELEM
+OPT_TELEM :=
+
+#OPT_FEC := FEC
+OPT_FEC :=
 
 PROT := RAW
 #PROT :=
@@ -10,6 +13,8 @@ PROT := RAW
 INITCHAN0 := 0
 INITCHAN1 := 30
 
+all = wfb
+OBJS = wfb.o wfb_utils.o
 
 # DO NOT TOUCH BELOW THIS LINE
 # ----------------------------
@@ -25,10 +30,10 @@ PROTFLAG :=
     PROTFLAG += -DRAW=1
   else
     PROTFLAG += -DRAW=0
-    PROTFLAG += -DADDR_LOCAL_NET=\"192.168.3.1\"
-    PROTFLAG += -DADDR_REMOTE_NET=\"192.168.3.2\"
-#    PROTFLAG += -DADDR_LOCAL_NET=\"10.33.38.113\"
-#    PROTFLAG += -DADDR_REMOTE_NET=\"10.33.38.74\"
+#    PROTFLAG += -DADDR_LOCAL_NET=\"192.168.3.1\"
+#    PROTFLAG += -DADDR_REMOTE_NET=\"192.168.3.2\"
+    PROTFLAG += -DADDR_LOCAL_NET=\"10.33.38.113\"
+    PROTFLAG += -DADDR_REMOTE_NET=\"10.33.38.74\"
 #    PROTFLAG += -DADDR_LOCAL_NET=\"192.168.1.131\"
 #    PROTFLAG += -DADDR_REMOTE_NET=\"192.168.1.25\"
     PROTFLAG += -DUDP_RAW_PORT_START=3000
@@ -53,17 +58,20 @@ OSFLAG :=
     OSFLAG += -DTELEM=0
   endif
 
-CHANFLAG := -DINITCHAN0=$(INITCHAN0) -DINITCHAN1=$(INITCHAN1)
+FECFLAG :=
+  ifeq ($(OPT_FEC),FEC)
+    FECFLAG += -DFEC=1
+    OBJS += fec.o
+  else 
+    OSFLAG += -DFEC=0
+  endif
 
-all = wfb
-OBJS = wfb.o wfb_utils.o
-#all = wfb
-#OBJS = wfb.o wfb_utils.o
+CHANFLAG := -DINITCHAN0=$(INITCHAN0) -DINITCHAN1=$(INITCHAN1)
 
 CFLAGS ?= -O2 -g
 CFLAGS += -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration
 CFLAGS += -DCONFIG_LIBNL30 -I/usr/include/libnl3
-CFLAGS += $(PROTFLAG) $(ROLEFLAG) $(CHANFLAG) $(OSFLAG)
+CFLAGS += $(PROTFLAG) $(ROLEFLAG) $(CHANFLAG) $(OSFLAG) $(FECFLAG)
 
 LIBS +=  -lnl-route-3 -lnl-genl-3 -lnl-3
 

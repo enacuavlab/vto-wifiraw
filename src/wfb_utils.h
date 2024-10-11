@@ -38,7 +38,7 @@ typedef enum { L0_ST, L1_ST, L2_ST, ST_NB } status_t;
 //           - on ground backup : wait 
 //
 //
-typedef enum { RAW0_FD, RAW1_FD, WFB_FD, TUN_FD, VID1_FD, VID2_FD, TEL_FD, FD_NB } cannal_t;
+typedef enum { TIME_FD, RAW0_FD, RAW1_FD, WFB_FD, TUN_FD, VID1_FD, VID2_FD, TEL_FD, FD_NB } cannal_t;
 
 typedef struct {
   uint16_t seq;
@@ -140,7 +140,7 @@ static uint8_t radiotaphdr[] =  {
 
 #define MCS_FLAGS  (IEEE80211_RADIOTAP_MCS_BW_20 | IEEE80211_RADIOTAP_MCS_SGI | (IEEE80211_RADIOTAP_MCS_STBC_1 << IEEE80211_RADIOTAP_MCS_STBC_SHIFT))
 
-#define MCS_INDEX  1
+#define MCS_INDEX  0
 
 static uint8_t radiotaphdr[] = {
     0x00, 0x00, // <-- radiotap version

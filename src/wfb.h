@@ -8,6 +8,7 @@
 #include <sys/ioctl.h>
 #include <linux/if_tun.h>
 #include "wfb_utils.h"
+#include <poll.h>
 
 #if TELEM
 #include <termios.h>
@@ -19,9 +20,10 @@
 #define PORT_LOCAL_WFB	5000
 
 /*****************************************************************************/
-static void wfb_addusr(wfb_utils_t *param, uint8_t cptfdstart, uint16_t maxfd[], fd_set readset[]) {
+static void wfb_addusr(wfb_utils_t *param, uint8_t *fd_nb, uint8_t *fd_arr) {
   uint8_t dev;
   struct ifreq ifr;
+
 
   dev=WFB_FD;  // One unidirectional link
   if (-1 == (param[dev].fd = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP))) exit(-1);
@@ -62,10 +64,7 @@ static void wfb_addusr(wfb_utils_t *param, uint8_t cptfdstart, uint16_t maxfd[],
   if (ioctl( fd_tun_udp, SIOCSIFMTU, &ifr ) < 0 ) exit(-1);
   ifr.ifr_flags = IFF_UP ;
   if (ioctl( fd_tun_udp, SIOCSIFFLAGS, &ifr ) < 0 ) exit(-1);
-  for (int i=cptfdstart;i<3;i++) {
-    FD_SET(param[dev].fd, &readset[i]);
-    if (param[dev].fd > maxfd[i]) maxfd[i] = param[dev].fd;
-  }
+  (*fd_nb)++; fd_arr[ *fd_nb ] = dev;
 
 
   dev=VID1_FD;   // Video (one unidirectional link)
@@ -76,16 +75,13 @@ static void wfb_addusr(wfb_utils_t *param, uint8_t cptfdstart, uint16_t maxfd[],
   addr.sin_port = htons(5600);
   addr.sin_addr.s_addr = inet_addr(ADDR_LOCAL);
   if (-1 == bind(param[dev].fd, (struct sockaddr *)&addr, sizeof(addr))) exit(-1);
-  for (int i=cptfdstart;i<3;i++) {
-    FD_SET(param[dev].fd, &readset[i]);
-    if (param[dev].fd > maxfd[i]) maxfd[i] = param[dev].fd;
-  }
+  (*fd_nb)++; fd_arr[ *fd_nb ] = dev;
 #else
   param[dev].addr_out[0].sin_family = AF_INET;
   param[dev].addr_out[0].sin_port = htons(5600);
   param[dev].addr_out[0].sin_addr.s_addr = inet_addr(ADDR_LOCAL);
 #endif // BOARD
-       
+ 
        
   dev=VID2_FD;   // Video (one unidirectional link)
   if (-1 == (param[dev].fd = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP))) exit(-1);
@@ -95,10 +91,7 @@ static void wfb_addusr(wfb_utils_t *param, uint8_t cptfdstart, uint16_t maxfd[],
   addr.sin_port = htons(5700);
   addr.sin_addr.s_addr = inet_addr(ADDR_LOCAL);
   if (-1 == bind(param[dev].fd, (struct sockaddr *)&addr, sizeof(addr))) exit(-1);
-  for (int i=cptfdstart;i<3;i++) {
-    FD_SET(param[dev].fd, &readset[i]);
-    if (param[dev].fd > maxfd[i]) maxfd[i] = param[dev].fd;
-  }
+  (*fd_nb)++; fd_arr[ *fd_nb ] = dev;
 #else
   param[dev].addr_out[0].sin_family = AF_INET;
   param[dev].addr_out[0].sin_port = htons(5700);
@@ -129,10 +122,7 @@ static void wfb_addusr(wfb_utils_t *param, uint8_t cptfdstart, uint16_t maxfd[],
   param[dev].addr_out[0].sin_family = AF_INET;
   param[dev].addr_out[0].sin_port = htons(4244);
   param[dev].addr_out[0].sin_addr.s_addr = inet_addr(ADDR_LOCAL);
-  for (int i=cptfdstart;i<3;i++) {
-    FD_SET(param[dev].fd, &readset[i]);
-    if (param[dev].fd > maxfd[i]) maxfd[i] = param[dev].fd;
-  }
+  (*fd_nb)++; fd_arr[ *fd_nb ] = dev;
 #endif // TELEM
 }
 #endif // WFB_H
