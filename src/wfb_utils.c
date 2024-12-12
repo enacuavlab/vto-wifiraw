@@ -313,6 +313,7 @@ void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, wfb_utils_msg_t *down
   if (pstat->raw[1] < 0) {
     wfb_net_incfreq( dev[ pstat->raw[0] + RAW0_FD].raw.freqcptcur, &dev[ !(pstat->raw[0]) + RAW0_FD ].raw ); 
     wfb_utils_down[ pstat->raw[0] ].chan = -1;
+    wfb_utils_down[ !(pstat->raw[0]) ].chan = -1;	  
     plog->len += sprintf((char *)plog->txt + plog->len,"Backup change chan (%d)\n",dev[ !(pstat->raw[0]) + RAW0_FD].raw.freqcptcur); 
   }
   downmsg[ pstat->raw[0] ]->len = sizeof(wfb_utils_down_t);
