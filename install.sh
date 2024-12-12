@@ -78,3 +78,4 @@ done;
 sudo cp $PROJ/material/60-wfb.rules /etc/udev/rules.d
 sudo cp $PROJ/material/wfb.service /etc/systemd/system
 sudo udevadm control --reload-rules
+mkdir $PROJ/obj $PROJ/bin
