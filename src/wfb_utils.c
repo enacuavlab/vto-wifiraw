@@ -20,7 +20,8 @@
 #define TUN_MTU 1400
 
 #if RAW
-extern struct iovec wfb_net_ieeehd_vec;
+extern struct iovec wfb_net_ieeehd_tx_vec;
+extern struct iovec wfb_net_ieeehd_rx_vec;
 extern struct iovec wfb_net_radiotaphd_tx_vec;
 extern struct iovec wfb_net_radiotaphd_rx_vec;
 #endif // RAW
@@ -38,8 +39,6 @@ wfb_utils_pay_t wfb_utils_pay;
 struct iovec wfb_utils_pay_vec = { .iov_base = &wfb_utils_pay, .iov_len = sizeof(wfb_utils_pay_t)};
 
 wfb_utils_down_t wfb_utils_down[2];
-
-uint16_t debugcpt = 0;
 
 /*****************************************************************************/
 void sock_init(wfb_utils_init_t *p, dir_t dir){
@@ -241,9 +240,15 @@ void wfb_utils_presetrawmsg(wfb_utils_rawmsg_t *msg, ssize_t bufsize, bool rxfla
     msg->iovecs.iov_base = &msg->bufs;
     msg->iovecs.iov_len  = bufsize;
 #if RAW
-    if (rxflag) msg->headvecs.head[0] = wfb_net_radiotaphd_rx_vec;
-    else msg->headvecs.head[0] = wfb_net_radiotaphd_tx_vec;
-    msg->headvecs.head[1] = wfb_net_ieeehd_vec;
+    if (rxflag) {
+      msg->headvecs.head[0] = wfb_net_radiotaphd_rx_vec;
+      msg->headvecs.head[1] = wfb_net_ieeehd_rx_vec;
+      memset(wfb_net_ieeehd_rx_vec.iov_base, 0, wfb_net_ieeehd_rx_vec.iov_len);
+    } else {
+      msg->headvecs.head[0] = wfb_net_radiotaphd_tx_vec;
+      msg->headvecs.head[1] = wfb_net_ieeehd_tx_vec;
+    }
+    memset(wfb_utils_pay_vec.iov_base, 0, wfb_utils_pay_vec.iov_len);
     msg->headvecs.head[2] = wfb_utils_pay_vec;
     msg->headvecs.head[3] = msg->iovecs;
     msg->msg.msg_iovlen = 4;
@@ -258,8 +263,6 @@ void wfb_utils_presetrawmsg(wfb_utils_rawmsg_t *msg, ssize_t bufsize, bool rxfla
 /*****************************************************************************/
 void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, wfb_utils_msg_t *downmsg[2],  wfb_utils_stat_t *pstat) {
   wfb_utils_msg_t *ptrmsg;
-  plog->len += sprintf((char *)plog->txt + plog->len, "%d DEBUG\n",debugcpt++);
-
   uint8_t template[]="(%d)(%d) devraw(%d) fails(%d) incom(%d) NbBytes(snd/rcv)\
   [%d](%d)(%d) [%d](%d)(%d) [%d](%d)(%d) [%d](%d)(%d) [%d](%d)(%d)\n";
   plog->len += sprintf((char *)plog->txt + plog->len, (char *)template, 
@@ -321,56 +324,57 @@ void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, wfb_utils_msg_t *down
   else downmsg[ !(pstat->raw[0]) ]->len = 0;
   pstat->stat[0].incoming = 0;
   pstat->stat[1].incoming = 0;
-  plog->len += sprintf((char *)plog->txt + plog->len,"Main (%d)",dev[ pstat->raw[0] + RAW0_FD].raw.freqcptcur); 
-  if (pstat->raw[1] >= 0)  plog->len += sprintf((char *)plog->txt + plog->len,"  Backup (%d)",
+  plog->len += sprintf((char *)plog->txt + plog->len,"Main dev(%d) chan(%d)",pstat->raw[0],dev[ pstat->raw[0] + RAW0_FD].raw.freqcptcur); 
+  if (pstat->raw[1] >= 0)  plog->len += sprintf((char *)plog->txt + plog->len,"  Backup dev(%d) chan(%d)", pstat->raw[1],
 		  dev[ (pstat->raw[1]) + RAW0_FD].raw.freqcptcur); 
-  plog->txt[plog->len++] = '\n';
+  plog->txt[plog->len++] = '\n';plog->txt[plog->len++] = '\n';
 
 #else 
-
+  bool flag = false;
   if (++pstat->stat[0].cpt > 1) {
     pstat->stat[0].cpt = 0; 
+
     for (uint8_t raw=0; raw < 2; raw++) {
       if (pstat->stat[raw].incoming == 0) {
         if (pstat->raw[0] == raw) pstat->raw[0] = -1;
         if (pstat->raw[1] == raw) pstat->raw[1] = -1;
       }
     }
+
     for (uint8_t raw=0; raw < 2; raw++) {
-      if (pstat->stat[raw].incoming > 0) {
+      if ((pstat->stat[raw].incoming > 0) && (pstat->stat[!(raw)].incoming == 0)) {
         if (pstat->stat[raw].chan < 0) {
-  	  pstat->raw[0] = raw;
-  	  pstat->raw[1] = -1;
-          plog->len += sprintf((char *)plog->txt + plog->len,"set main and unset backup\n");
-        } else {
+          pstat->raw[0] = raw; pstat->raw[1] = -1;
+          plog->len += sprintf((char *)plog->txt + plog->len,"main set dev(%d)\n",pstat->raw[0]);
+	} else {
           if (pstat->stat[raw].chan >= 100) {
             pstat->stat[raw].chan -= 100;
-  	    pstat->raw[0] = raw;
-  	    pstat->raw[1] = !raw;
-  	  } else {
-  	    pstat->raw[0] = !raw;
-  	    pstat->raw[1] = raw;
-  	  }
-  	  bool flagset=false;
-          if (pstat->stat[raw].chan != dev[ !raw + RAW0_FD ].raw.freqcptcur) flagset = true;
-  	  if (flagset) wfb_net_setfreq( pstat->stat[raw].chan, &dev[ !raw + RAW0_FD ].raw ); 
-          plog->len += sprintf((char *)plog->txt + plog->len,"set or confirm (%d)(%d), main (%d) and backup(%d)\n",true,flagset,
-			 pstat->raw[0], dev[ pstat->raw[0] + RAW0_FD ].raw.freqcptcur,
-			 pstat->raw[1], dev[ pstat->raw[1] + RAW0_FD ].raw.freqcptcur);
-        }
+	    pstat->raw[0] = raw; pstat->raw[1] = !(raw); 
+  	    wfb_net_setfreq( pstat->stat[pstat->raw[0]].chan, &dev[ pstat->raw[1] + RAW0_FD ].raw);
+            plog->len += sprintf((char *)plog->txt + plog->len,"main set, backup set dev[%d] chan(%d)\n", pstat->raw[1],
+                               dev[ pstat->raw[1] + RAW0_FD ].raw.freqcptcur);
+	  } else {
+	    pstat->raw[0] = !(raw); pstat->raw[1] = raw; 
+  	    wfb_net_setfreq( pstat->stat[pstat->raw[0]].chan, &dev[ pstat->raw[1] + RAW0_FD ].raw);
+            plog->len += sprintf((char *)plog->txt + plog->len,"main switch, backup set dev[%d] chan(%d)\n", pstat->raw[1],
+                               dev[ pstat->raw[1] + RAW0_FD ].raw.freqcptcur);
+	  }
+	}
       }
     }
-    for (uint8_t raw=0; raw < 2; raw++) { 
-      pstat->stat[ raw ].incoming = 0;
-      if (pstat->raw[raw] < 0) { 
-        wfb_net_incfreq( dev[ !raw + RAW0_FD].raw.freqcptcur, &dev[ raw + RAW0_FD ].raw ); 
-        plog->len += sprintf((char *)plog->txt + plog->len,"(%d)(%d) Device change chan\n",raw,dev[ raw + RAW0_FD ].raw .freqcptcur);
-      }
+
+    pstat->stat[0].incoming = 0; pstat->stat[1].incoming = 0; 
+    if (pstat->raw[0] < 0) {
+      wfb_net_incfreq( dev[ 1 + RAW0_FD].raw.freqcptcur, &dev[ 0 + RAW0_FD ].raw ); 
+      wfb_net_incfreq( dev[ 0 + RAW0_FD].raw.freqcptcur, &dev[ 1 + RAW0_FD ].raw ); 
+      plog->len += sprintf((char *)plog->txt + plog->len,"devices increment chan (%d (%d)\n",
+			dev[ 0 + RAW0_FD ].raw .freqcptcur, dev[ 1 + RAW0_FD ].raw .freqcptcur);
     }
-  } 
-  if (pstat->raw[0] >= 0)  plog->len += sprintf((char *)plog->txt + plog->len,"Main (%d)",dev[ pstat->raw[0] + RAW0_FD].raw.freqcptcur); 
-  if (pstat->raw[1] >= 0)  plog->len += sprintf((char *)plog->txt + plog->len,"  Backup (%d)",dev[ pstat->raw[1] + RAW0_FD].raw.freqcptcur); 
-  plog->txt[plog->len++] = '\n';
+  }
+
+  if (pstat->raw[0] >= 0)  plog->len += sprintf((char *)plog->txt + plog->len,"Main dev(%d) chan(%d)",pstat->raw[0],dev[ pstat->raw[0] + RAW0_FD].raw.freqcptcur); 
+  if (pstat->raw[1] >= 0)  plog->len += sprintf((char *)plog->txt + plog->len,"  Backup dev(%d) chan(%d)",pstat->raw[1],dev[ pstat->raw[1] + RAW0_FD].raw.freqcptcur); 
+  plog->txt[plog->len++] = '\n';plog->txt[plog->len++] = '\n';
 
 #endif //   BOARD
 #endif //   RAW

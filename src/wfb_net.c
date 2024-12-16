@@ -33,7 +33,9 @@ uint32_t g_chans[freqsmax];
 uint32_t g_iftype;
 
 
-struct iovec wfb_net_ieeehd_vec = { .iov_base = &wfb_net_ieeehd, .iov_len = sizeof(wfb_net_ieeehd)};
+struct iovec wfb_net_ieeehd_tx_vec = { .iov_base = &wfb_net_ieeehd_tx, .iov_len = sizeof(wfb_net_ieeehd_tx)};
+struct iovec wfb_net_ieeehd_rx_vec = { .iov_base = &wfb_net_ieeehd_rx, .iov_len = sizeof(wfb_net_ieeehd_rx)};
+
 struct iovec wfb_net_radiotaphd_tx_vec = { .iov_base = &wfb_net_radiotaphd_tx, .iov_len = sizeof(wfb_net_radiotaphd_tx)};
 struct iovec wfb_net_radiotaphd_rx_vec = { .iov_base = &wfb_net_radiotaphd_rx, .iov_len = sizeof(wfb_net_radiotaphd_rx)};
 
@@ -237,6 +239,9 @@ bool wfb_net_setfreq(uint8_t freqcpt,wfb_net_init_t *param) {
 void wfb_net_incfreq(uint8_t avoidfreqcpt, wfb_net_init_t *param) {
   if(param->freqcptcur < (param->freqsnb - 1)) ++(param->freqcptcur);
   else param->freqcptcur = 0;
-  if ( param->freqcptcur == avoidfreqcpt)  ++(param->freqcptcur); 
+  if (param->freqcptcur == avoidfreqcpt) {
+    if(param->freqcptcur < (param->freqsnb - 1)) ++(param->freqcptcur);
+    else param->freqcptcur = 0;
+  }
   wfb_net_setfreq( param->freqcptcur, param);
 }

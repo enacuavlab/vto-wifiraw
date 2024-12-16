@@ -22,7 +22,7 @@ bool wfb_net_setfreq(uint8_t freqcpt,wfb_net_init_t *param);
 void wfb_net_incfreq(uint8_t avoidfreqcpt, wfb_net_init_t *param); 
 
 /************************************************************************************************/
-static uint8_t wfb_net_ieeehd[] = {
+static uint8_t wfb_net_ieeehd_tx[] = {
   0x08, 0x01,                         // Frame Control : Data frame from STA to DS
   0x00, 0x00,                         // Duration
   0x66, 0x55, 0x44, 0x33, 0x22, 0x11, // Receiver MAC
@@ -30,6 +30,8 @@ static uint8_t wfb_net_ieeehd[] = {
   0x66, 0x55, 0x44, 0x33, 0x22, 0x11, // Destination MAC
   0x10, 0x86                          // Sequence control
 };
+
+static uint8_t wfb_net_ieeehd_rx[24];
 
 /************************************************************************************************/
 #define IEEE80211_RADIOTAP_MCS_HAVE_BW    0x01

@@ -41,7 +41,8 @@ OSFLAG :=
 
 TARGET   = wfb
 
-CFLAGS ?= -O2 -g
+#CFLAGS ?= -O2 -g
+CFLAGS ?= -Ofast -g
 CFLAGS += -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration
 CFLAGS += -DCONFIG_LIBNL30 -I/usr/include/libnl3
 CFLAGS += $(PROTFLAG) $(ROLEFLAG) $(OSFLAG)

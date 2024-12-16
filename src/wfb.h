@@ -18,7 +18,7 @@
 static int PORTS_VID[] = { 5600, 5700 };
 static int PORTS_RAW[] = { 3000, 3500 };
 
-static int INITCHAN[] = { 30, 0 };
+static int INITCHAN[] = { 10, 0 };
 
 #define WFBPORT  5000
 
