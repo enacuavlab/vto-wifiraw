@@ -17,6 +17,8 @@ ROLEFLAG :=
 PROTFLAG :=
   ifeq ($(PROT),RAW)
     PROTFLAG += -DRAW=1
+    PROTFLAG += -DDRIVERNAME=\"rtl88XXau\"
+#    PROTFLAG += -DDRIVERNAME=\"rtl88xxau_wfb\"
   else
     PROTFLAG += -DRAW=0
 #    PROTFLAG += -DADDR_LOCAL_RAW=\"10.33.38.113\"
