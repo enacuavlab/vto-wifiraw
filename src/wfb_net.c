@@ -116,7 +116,7 @@ bool wfb_net_init(wfb_net_init_t *param) {
           if ((lenlink = readlink(path, buf, sizeof(buf)-1)) != -1) {
             buf[lenlink] = '\0';
             ptr = strrchr( buf, '/' );
-            if ((strncmp("rtl88XXau",(ptr+1),9)) == 0) {
+            if ((strncmp( DRIVERNAME ,(ptr+1),strlen(DRIVERNAME))) == 0) {
               sprintf(path,"%s/%s/phy80211",netpath,dir1->d_name);
               if ((lenlink = readlink(path, buf, sizeof(buf)-1)) != -1) {
                 buf[lenlink] = '\0';
