@@ -35,5 +35,6 @@ fi
 sudo systemctl stop wfb.service
 sudo systemctl disable wfb.service
 sudo rm /etc/systemd/system/wfb.service
+sudo rm /etc/modprobe.d/8812au.conf
 sudo rm /etc/udev/rules.d/60-wfb.rules
 sudo udevadm control --reload-rules
