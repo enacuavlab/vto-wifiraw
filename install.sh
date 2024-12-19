@@ -75,6 +75,7 @@ for f in $PROJ/material/60-wfb.rules $PROJ/material/wfb.service $PROJ/scripts/wf
   sed -i 's#TOBEUPDATEATINSTALLATION#'$PROJ'#' ${f};
   echo ${f};
 done;
+sudo cp $PROJ/material/8812au.conf /etc/modprobe.d
 sudo cp $PROJ/material/60-wfb.rules /etc/udev/rules.d
 sudo cp $PROJ/material/wfb.service /etc/systemd/system
 sudo udevadm control --reload-rules
