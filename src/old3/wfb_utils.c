@@ -220,6 +220,20 @@ void wfb_utils_init(wfb_utils_init_t dev[FD_NB], uint8_t *readcpt, uint8_t readt
 }
 
 /*****************************************************************************/
+void wfb_utils_presetmsg(uint8_t rawmsgnb, uint8_t msgnb, uint8_t msgbuf[2][5][STORE_SIZE][ONLINE_MTU], wfb_utils_msg_t msg[2][5], ssize_t store) {
+
+  for (uint8_t i=0; i < rawmsgnb; i++) {
+    for (uint8_t j=0; j < msgnb; j++) {
+      msg[i][j].len = 0;
+      for (uint8_t k=0; k < store; k++) {
+        msg[i][j].vecs[k].iov_base = &msgbuf[i][j][k];
+        msg[i][j].vecs[k].iov_len = store;
+      }
+    }
+  }
+}
+
+/*****************************************************************************/
 void wfb_utils_presetrawmsg(wfb_utils_rawmsg_t *msg, ssize_t bufsize, bool rxflag) {
 
     memset(&msg->bufs, 0, sizeof(msg->bufs));
@@ -247,8 +261,8 @@ void wfb_utils_presetrawmsg(wfb_utils_rawmsg_t *msg, ssize_t bufsize, bool rxfla
 }
 
 /*****************************************************************************/
-void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, struct iovec *downmsg[2],  wfb_utils_stat_t *pstat) {
-  struct iovec *ptrmsg;
+void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, wfb_utils_msg_t *downmsg[2],  wfb_utils_stat_t *pstat) {
+  wfb_utils_msg_t *ptrmsg;
   uint8_t template[]="(%d)(%d) devraw(%d) fails(%d) incom(%d) NbBytes(snd/rcv)\
   [%d](%d)(%d) [%d](%d)(%d) [%d](%d)(%d) [%d](%d)(%d) [%d](%d)(%d)\n";
   plog->len += sprintf((char *)plog->txt + plog->len, (char *)template, 
@@ -305,9 +319,9 @@ void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, struct iovec *downmsg
     wfb_utils_down[ !(pstat->raw[0]) ].chan = -1;	  
     plog->len += sprintf((char *)plog->txt + plog->len,"Backup change chan (%d)\n",dev[ !(pstat->raw[0]) + RAW0_FD].raw.freqcptcur); 
   }
-  downmsg[ pstat->raw[0] ]->iov_len = sizeof(wfb_utils_down_t);
-  if (pstat->raw[1] >=0 ) downmsg[ pstat->raw[1] ]->iov_len = sizeof(wfb_utils_down_t);
-  else downmsg[ !(pstat->raw[0]) ]->iov_len = 0;
+  downmsg[ pstat->raw[0] ]->len = sizeof(wfb_utils_down_t);
+  if (pstat->raw[1] >=0 ) downmsg[ pstat->raw[1] ]->len = sizeof(wfb_utils_down_t);
+  else downmsg[ !(pstat->raw[0]) ]->len = 0;
   pstat->stat[0].incoming = 0;
   pstat->stat[1].incoming = 0;
   plog->len += sprintf((char *)plog->txt + plog->len,"Main dev(%d) chan(%d)",pstat->raw[0],dev[ pstat->raw[0] + RAW0_FD].raw.freqcptcur); 

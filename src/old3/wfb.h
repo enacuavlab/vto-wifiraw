@@ -10,10 +10,7 @@
 
 #define ADDR_LOCAL	"127.0.0.1" 
 
-#define FEC_K		8
-#define FEC_N		12
-
-#define PAY_MTU		1400
+#define ONLINE_MTU	1400
 #define PERIOD_DELAY_S	1
 
 #define DRONEID         5
@@ -21,7 +18,7 @@
 static int PORTS_VID[] = { 5600, 5700 };
 static int PORTS_RAW[] = { 3000, 3500 };
 
-static int INITCHAN[] = { 30, 0 };
+static int INITCHAN[] = { 10, 0 };
 
 #define WFBPORT  5000
 

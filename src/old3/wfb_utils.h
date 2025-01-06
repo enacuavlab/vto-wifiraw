@@ -54,10 +54,9 @@ typedef struct {
 } head_t;
 
 typedef struct {
-  uint16_t feclen;
-} __attribute__((packed)) wfb_utils_fec_t;
-
-#define ONLINE_MTU PAY_MTU + sizeof(wfb_utils_fec_t)
+  ssize_t len;
+  struct iovec vecs[STORE_SIZE];
+} wfb_utils_msg_t;
 
 typedef struct {
   uint8_t bufs[ ONLINE_MTU + 1];
@@ -70,9 +69,7 @@ typedef struct {
   uint8_t droneid;
   uint8_t msgcpt;
   uint16_t msglen;
-  uint8_t seq;
-  uint8_t fec;
-  uint8_t num;
+  uint32_t num;
 } __attribute__((packed)) wfb_utils_pay_t;
 
 typedef struct {
@@ -82,7 +79,8 @@ typedef struct {
 
 void wfb_utils_init(wfb_utils_init_t [FD_NB], uint8_t *readcpt, uint8_t readtab[FD_NB], struct pollfd readsets[FD_NB], bool *);
 void wfb_utils_presetrawmsg(wfb_utils_rawmsg_t *, ssize_t, bool );
-void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, struct iovec *downmsg[2],  wfb_utils_stat_t *pstat);
+void wfb_utils_presetmsg(uint8_t rawmsgnb, uint8_t msgnb, uint8_t msgbuf[2][5][STORE_SIZE][ONLINE_MTU], wfb_utils_msg_t msg[2][5], ssize_t store) ;
+void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, wfb_utils_msg_t *downmsg[2],  wfb_utils_stat_t *pstat);
 
 
 #endif // WFB_UTILS_H
