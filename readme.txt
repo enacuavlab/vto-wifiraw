@@ -76,8 +76,8 @@ etc ...
 -  Used
   - netlink : to retreive available wifi channels and switch among them
   - raw socket : to retrieve full traffic and detect occupied channels
+  - fec : to complete partial information
 - Not used
-  - fec : only recover partial information
   - pcap : not needed with raw socket
 
 3) Context
