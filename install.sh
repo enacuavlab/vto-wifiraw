@@ -56,8 +56,8 @@ else
 #  make
 #  sudo make install
 fi  
-ln -s ../zfec/zfec/fec.c src/
-ln -s ../zfec/zfec/fec.h src/
+ln -s $PROJ/zfec/zfec/fec.c $PROJ/src
+ln -s $PROJ/zfec/zfec/fec.h $PROJ/src
 sudo apt-get install libnl-3-dev
 if uname -m | grep -Eq 'x86_64' ; then
   sudo ln -s /usr/lib/x86_64-linux-gnu/libnl-route-3.so.200.26.0 /usr/lib/x86_64-linux-gnu/libnl-route-3.so
