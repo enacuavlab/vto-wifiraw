@@ -2,3 +2,6 @@
 	path = rtl8812au
 	url = https://github.com/aircrack-ng/rtl8812au
 	branch = v5.6.4.2
+[submodule "zfec"]
+	path = zfec
+	url = https://github.com/tahoe-lafs/zfec.git
