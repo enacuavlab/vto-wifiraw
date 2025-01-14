@@ -42,27 +42,29 @@ int main(void)
 
   fec_init();
   fec_t *fec_p = fec_new(FEC_K, FEC_N);
-  uint8_t numprev[2]={0,0}, vidnum[2]={0,0,},vidseq[2]={0,0}, *pdebug, bufdebug[4][ONLINE_MTU]; memset(bufdebug, 0, sizeof(bufdebug));
-
+  int16_t numprev[2]={-1,-1};
+  uint8_t vidnum[2]={0,0,}, *pdebug;
 #if BOARD
+  uint8_t vidseq[2]={1,1};
   unsigned blocknums[FEC_N-FEC_K]; for(uint8_t i=0; i<(FEC_N-FEC_K); i++) blocknums[i]=(i+FEC_K);
   uint8_t *datablocks[FEC_K], *fecblocks[FEC_N-FEC_K];
 #else
+  uint8_t vidseq[2]={0,0};
   unsigned index[FEC_K];
   uint8_t outblocksbuf[FEC_N-FEC_K][ONLINE_MTU], *outblocks[FEC_N-FEC_K], *inblocks[FEC_K], vidblkin[rawmsgnb]={0,0};
-  uint8_t *sdbuf, k_out = 0;
+  uint8_t *sdbuf, k_out = 0, idx = 0;
   int8_t k_in[2]={-1,-1};
   uint16_t sdlen;
-  int8_t nextfec = -1;
-  bool display=false, reset=false;
-  const uint8_t vidblksize = (1 + FEC_N);
+  bool display=false,reset=false;
+  const uint8_t vidblksize = (2 * (1 + FEC_N));
   wfb_utils_rawmsg_t *vidblk[rawmsgnb][ vidblksize ], *prawmsg;
 #endif // BOARD
        
   wfb_utils_stat_t wfbstat;
   wfb_utils_init_t dev[FD_NB];
   struct pollfd readsets[FD_NB];
-  bool bckup = false, failflag = false;
+  bool bckup = false, sendflag=false;
+  int16_t failseq = -1;
   wfb_utils_init(dev, &readcpt, readtab, readsets, &bckup);
   if (!bckup) wfbstat.raw[0] = 0;
   else {
@@ -102,6 +104,13 @@ int main(void)
 		ptrmsg->iov_len = len + sizeof(wfb_utils_fec_t);
                 memcpy(&msgbuf[0][devcpt - WFB_FD][vidnum[devcpt - VID1_FD]][0], &len, sizeof(wfb_utils_fec_t));
 		vidnum[devcpt - VID1_FD]++;
+/*
+                pdebug = (uint8_t *)&msgbuf[0][devcpt - WFB_FD][vidnum[devcpt - VID1_FD] - 1][sizeof(wfb_utils_fec_t)];
+                printf("readv fec(%d)  %02X[%ld]%02X\n", vidnum[devcpt - VID1_FD] - 1,
+                  *(14 + pdebug), 
+		  len,
+                  *(len + pdebug - 1));
+*/
 	      }
 	      break;
 #else
@@ -125,13 +134,22 @@ int main(void)
 	        wfbstat.stat[devcpt - RAW0_FD].incoming++;
 #endif // BOARD
 	      } else {
-                if (numprev[devcpt - RAW0_FD] != 0) {
-                  numprev[devcpt - RAW0_FD] = 1 + numprev[devcpt - RAW0_FD];
-		  if (numprev[devcpt - RAW0_FD] != wfb_utils_pay.num) {
-		    wfbstat.stat[devcpt - RAW0_FD].fails++;
-		    failflag = true;
-		  }
-		}
+                if (numprev[devcpt - RAW0_FD] >= 0) {
+		  if (numprev[devcpt - RAW0_FD] == 255) {
+		    if (wfb_utils_pay.num != 0) {
+  		      wfbstat.stat[devcpt - RAW0_FD].fails++;
+  		      failseq = wfb_utils_pay.seq;
+		    }
+		  } else if ((1 + (numprev[devcpt - RAW0_FD])) != wfb_utils_pay.num) {
+  		    wfbstat.stat[devcpt - RAW0_FD].fails++;
+  		    failseq = wfb_utils_pay.seq;
+  		  } 
+  		} else {
+                  if (wfb_utils_pay.num > 0) {
+  		    wfbstat.stat[devcpt - RAW0_FD].fails++;
+                    failseq = wfb_utils_pay.seq;
+  		  }
+  		}
 		numprev[devcpt - RAW0_FD] = wfb_utils_pay.num;
 		devout = WFB_FD + wfb_utils_pay.msgcpt;
 		if (wfb_utils_pay.msglen > 0) {
@@ -144,22 +162,25 @@ int main(void)
 		    case VID1_FD:
 		    case VID2_FD:
                       rawmsg[devcpt - RAW0_FD][rawcur].headvecs.head[wfb_utils_datapos].iov_len = wfb_utils_pay.msglen;
+/*
+                      pdebug = (uint8_t *)rawmsg[devcpt - RAW0_FD][rawcur].headvecs.head[wfb_utils_datapos].iov_base;
+                      printf("\nreadmsg(%d)  num[%d] seq(%d) fec(%d) %02X[%ld]%02X\n",(devout - VID1_FD),wfb_utils_pay.num,wfb_utils_pay.seq,wfb_utils_pay.fec,
+                                  *(16 + pdebug),
+                                  rawmsg[devcpt - RAW0_FD][rawcur].headvecs.head[wfb_utils_datapos].iov_len,
+                                  *(rawmsg[devcpt - RAW0_FD][rawcur].headvecs.head[wfb_utils_datapos].iov_len + pdebug - 1));
+*/
                       if (vidseq[devout - VID1_FD] == 0) vidseq[devout - VID1_FD] = wfb_utils_pay.seq;
 		      if (vidseq[devout - VID1_FD] == wfb_utils_pay.seq) {
 		        vidblk[devout - VID1_FD][wfb_utils_pay.fec] = &rawmsg[devcpt - RAW0_FD][ rawcur ];
-			if ((!vidblk[devout - VID1_FD][0])&&(nextfec<0)) {
-			  if (rawcur > 0) nextfec = (rawcur-1); else nextfec = (vidblksize-1);
-			}
 		      } else {
-
-			if ((!vidblk[devout - VID1_FD][0])&&(nextfec>=0)) vidblk[devout - VID1_FD][0]=&rawmsg[devcpt - RAW0_FD][nextfec];
-
-                        uint8_t idx=0, j=FEC_K;
+                        uint8_t j=FEC_K;
+			idx = 0;
                         for (uint8_t k=0;k<FEC_K;k++) {
                           if (vidblk[devout - VID1_FD][k]) {
                             inblocks[k] = (uint8_t *)vidblk[devout - VID1_FD][k]->headvecs.head[wfb_utils_datapos].iov_base;
                             index[k] = k;
   			  } else {
+                            if (idx == (FEC_N-FEC_K)) break;
                             while (( j < FEC_N ) && !(vidblk[devout - VID1_FD][j])) j++;
                             inblocks[k] = (uint8_t *)vidblk[devout - VID1_FD][j]->headvecs.head[wfb_utils_datapos].iov_base;
                             outblocks[idx] = &outblocksbuf[idx][0]; idx++;
@@ -167,48 +188,73 @@ int main(void)
   			    j++;
   			  }
   			}
-
-    	                fec_decode(fec_p,
-    			  (const gf*restrict const*restrict const)inblocks,
-    			  (gf*restrict const*restrict const)outblocks,
-    			  (const unsigned*restrict const)index, 
-    			  ONLINE_MTU);
-
 			display = true;
-			k_out = FEC_K;
-			if (k_in[devout - VID1_FD] == -1) k_in[devout - VID1_FD] = 0;
-			else k_in[devout - VID1_FD] = k_in[devout - VID1_FD] + 1;
 		        reset = true;
-		      }
+			k_out = 1 + FEC_K;
+                        vidblk[devout - VID1_FD][ FEC_K ] = &rawmsg[devcpt - RAW0_FD][ rawcur ];
 
-		      if ((wfb_utils_pay.fec < FEC_K) && (! failflag)) {
-                        k_in[devout - VID1_FD] = wfb_utils_pay.fec; k_out = (wfb_utils_pay.fec + 1);
-			failflag = false; display = true;
+			if ((idx > 0)&&(idx < (FEC_N - FEC_K))) {
+			  k_in[devout - VID1_FD] = k_in[devout - VID1_FD] + 1;
+/*
+			  printf("\nDECODE (%d) ",idx);
+                          for (uint8_t k=0;k<FEC_K;k++) printf("[%d]",index[k]);
+                          printf("\n");
+*/
+    	                  fec_decode(fec_p,
+    			    (const gf*restrict const*restrict const)inblocks,
+    			    (gf*restrict const*restrict const)outblocks,
+    			    (const unsigned*restrict const)index, 
+    			    ONLINE_MTU);
+			} else k_in[devout - VID1_FD] = FEC_K;
+		      }
+		      if (failseq < 0) {
+		        if (wfb_utils_pay.fec < FEC_K) { 
+                          k_in[devout - VID1_FD] = wfb_utils_pay.fec; k_out = (wfb_utils_pay.fec + 1);
+			  display = true;
+			} else display = false;
 		      }
 
 		      if (display) {
-                        display = false;
-  			for (uint8_t k = k_in[devout - VID1_FD]; k < k_out; k++) {
-     			  prawmsg = vidblk[devout - VID1_FD][k];
-                          if (prawmsg) {
+                        display = false; idx=0;
+  		        for (uint8_t k = k_in[devout - VID1_FD]; k < k_out; k++) {
+                          sdbuf = 0;
+		          if (failseq < 0) {
+			    prawmsg = &rawmsg[devcpt - RAW0_FD][rawcur];
                             sdbuf = (uint8_t *)(prawmsg->headvecs.head[wfb_utils_datapos].iov_base) + sizeof(wfb_utils_fec_t); 
-                            sdlen = (prawmsg->headvecs.head[wfb_utils_datapos].iov_len) - sizeof(wfb_utils_fec_t); 
-			  } else {
-			    sdlen = ((wfb_utils_fec_t *)&outblocksbuf[k][0])->feclen;
-                            sdbuf = &outblocksbuf[k][sizeof(wfb_utils_fec_t)];
+                            sdlen = prawmsg->headvecs.head[wfb_utils_datapos].iov_len - sizeof(wfb_utils_fec_t); 
+			  } else{
+			    prawmsg = vidblk[devout - VID1_FD][k];
+                            if (prawmsg) {
+                              sdbuf = (uint8_t *)(prawmsg->headvecs.head[wfb_utils_datapos].iov_base) + sizeof(wfb_utils_fec_t); 
+                              sdlen = (prawmsg->headvecs.head[wfb_utils_datapos].iov_len) - sizeof(wfb_utils_fec_t); 
+			    } else {
+			      sdlen = ((wfb_utils_fec_t *)&outblocksbuf[idx][0])->feclen;
+                              sdbuf = &outblocksbuf[idx][sizeof(wfb_utils_fec_t)];
+			      idx++;
+			    }
 			  }
-                          if ((len = sendto(dev[devout].fd, sdbuf, sdlen, MSG_DONTWAIT, 
-					      (struct sockaddr *)&(dev[devout].addrout), sizeof(struct sockaddr))) > 0) {
-                            wfbstat.stat[devcpt - RAW0_FD].dev[devout].rcv += len;
-                          }
-			}
+			  if(sdbuf) {
+                            if ((len = sendto(dev[devout].fd, sdbuf, sdlen, MSG_DONTWAIT, 
+		                        (struct sockaddr *)&(dev[devout].addrout), sizeof(struct sockaddr))) > 0) {
+                              wfbstat.stat[devcpt - RAW0_FD].dev[devout].rcv += len;
+/*
+			      pdebug = sdbuf;
+                              printf("%02X[%ld][%d]%02X  ",*(14 + pdebug),
+                                  len,
+                                  sdlen,
+                                  *(sdlen + pdebug - 1));
+*/
+			    }
+			  }
+                        }
 		      }
 
 		      if (reset) {
                         reset = false;
-			nextfec = -1;
-			memset(&vidblk[devout - VID1_FD][0],0,vidblksize);
+			failseq = -1;
 			vidseq[devout - VID1_FD] = wfb_utils_pay.seq;
+			memset(&vidblk[devout - VID1_FD][0],0,vidblksize);
+                        vidblk[devout - VID1_FD][0] = &rawmsg[devcpt - RAW0_FD][ rawcur ];
 		      }
 
 		      if (rawcur == (vidblksize-1)) rawcur=0;
@@ -241,12 +287,14 @@ int main(void)
 	    default:  
               break;
           }
-        }
-      } 
+        } // if readset POLLIN
+      } // end for 
 
       for (uint8_t j=0; j < msgnb; j++) {
         if (bckup) tmp=2; else tmp=1;
+
         for (uint8_t i=0; i<tmp; i++) {
+	  uint8_t k=0;
 #if BOARD
 	  if ((j == (VID1_FD - WFB_FD)) || (j == (VID2_FD - WFB_FD))) {
 	    if (vidnum[ j - VID1_FD + WFB_FD] == FEC_K) {
@@ -255,25 +303,23 @@ int main(void)
 	        fecblocks[f] = (uint8_t *)&msgbuf[i][j][f + FEC_K];
                 msg[i][j][f + FEC_K].iov_len = ONLINE_MTU;
 	      }
-	      vidseq[ j - VID1_FD + WFB_FD]++;
-	      seq = vidseq[ j - VID1_FD + WFB_FD];
-
 	      fec_encode(fec_p,
 			 (const gf*restrict const*restrict const)datablocks,
 			 (gf*restrict const*restrict const)fecblocks,
 			 (const unsigned*restrict const)blocknums, (FEC_N-FEC_K), ONLINE_MTU);
 	    }
 	  } 
+	  if ((j == (VID1_FD - WFB_FD)) || (j == (VID2_FD - WFB_FD)))
+	    k = (vidnum[ j - VID1_FD + WFB_FD ] - 1);
 #endif // BOARD
-	  uint8_t k=0;
           while (msg[i][j][k].iov_len > 0) {
 	    raw = wfbstat.raw[i];
             if (raw < 0) msg[i][j][k].iov_len = 0; 
 	    else {
-	      if ((j == (VID1_FD - WFB_FD)) || (j == (VID2_FD - WFB_FD))) {
-	        if (vidnum[ j - VID1_FD + WFB_FD] < FEC_K) break;
-		else if (k == (FEC_N -1)) vidnum[ j - VID1_FD + WFB_FD] = 0; 
-	      }
+#if BOARD
+	      if ((j == (VID1_FD - WFB_FD)) || (j == (VID2_FD - WFB_FD)))
+	        seq = vidseq[ j - VID1_FD + WFB_FD];
+#endif // BOARD
               wfb_utils_presetrawmsg(&rawmsg[raw][0], ONLINE_MTU, false);
               wfb_utils_pay.msgcpt = j;
               wfb_utils_pay.droneid = DRONEID;
@@ -281,30 +327,37 @@ int main(void)
               wfb_utils_pay.fec = k;
               wfb_utils_pay.num = num++;
               wfb_utils_pay.msglen = msg[i][j][k].iov_len ;
-
-    	      rawmsg[raw][0].headvecs.head[wfb_utils_datapos] = msg[i][j][k];
-#if RAW
-#else
-    	      rawmsg[raw][0].msg.msg_name = &dev[raw + RAW0_FD].addrout;
-    	      rawmsg[raw][0].msg.msg_namelen = sizeof(dev[raw + RAW0_FD].addrout);
-#endif // RAW
+  
+      	      rawmsg[raw][0].headvecs.head[wfb_utils_datapos] = msg[i][j][k];
+  #if RAW
+  #else
+      	      rawmsg[raw][0].msg.msg_name = &dev[raw + RAW0_FD].addrout;
+      	      rawmsg[raw][0].msg.msg_namelen = sizeof(dev[raw + RAW0_FD].addrout);
+  #endif // RAW
               len = sendmsg(dev[raw + RAW0_FD].fd, &rawmsg[raw][0].msg, MSG_DONTWAIT);
-      	      wfbstat.stat[raw].dev[j + WFB_FD].snd += msg[i][j][k].iov_len ;
-
-
+        	      wfbstat.stat[raw].dev[j + WFB_FD].snd += msg[i][j][k].iov_len ;
+  
+ /* 
               pdebug = (uint8_t *)rawmsg[raw][0].headvecs.head[wfb_utils_datapos].iov_base;
-              printf("(%ld) sendmsg seq(%d) fec(%d) %02X[%ld]%02X\n",len,seq,k,
-                *(16 + pdebug),
-                rawmsg[raw][0].headvecs.head[wfb_utils_datapos].iov_len,
-                *(rawmsg[raw][0].headvecs.head[wfb_utils_datapos].iov_len + pdebug - 1));
-
-
+              printf("sendmsg num(%d) seq(%d) fec(%d) len(%ld) %02X[%ld]%02X\n",num-1,seq,k,len,
+                  *(16 + pdebug),
+                  rawmsg[raw][0].headvecs.head[wfb_utils_datapos].iov_len,
+                  *(rawmsg[raw][0].headvecs.head[wfb_utils_datapos].iov_len + pdebug - 1));
+*/
+#if BOARD
+	      if ((j == (VID1_FD - WFB_FD)) || (j == (VID2_FD - WFB_FD))) {
+                if ((k == (FEC_N - 1)) && (msg[i][j][FEC_N - 1].iov_len > 0)) {
+		  vidnum[ j - VID1_FD + WFB_FD] = 0; 
+		  vidseq[ j - VID1_FD + WFB_FD]++; 
+                }
+	      }
+#endif // BOARD
               msg[i][j][k].iov_len = 0;
 	      k++;
 	    }
 	  }
         }
       }
-    }
+    } // end poll
   }
 }
