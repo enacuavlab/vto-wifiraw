@@ -25,7 +25,8 @@ int main(void)
   ssize_t len;
 
 #define rawmsgnb 2 // { RAW0_FD, RAW1_FD }
-  wfb_utils_rawmsg_t rawmsg[rawmsgnb][FEC_N];
+  const uint8_t rawmsgstoresize = 1 + (2 * (1 + FEC_N));
+  wfb_utils_rawmsg_t rawmsg[rawmsgnb][rawmsgstoresize];
   uint8_t rawcur=0;
 
 #define msgnb 5    // { WFB_FD, TUN_FD, VID1_FD, VID2_FD, TEL_FD }
@@ -43,7 +44,7 @@ int main(void)
   fec_init();
   fec_t *fec_p = fec_new(FEC_K, FEC_N);
   int16_t numprev[2]={-1,-1};
-  uint8_t vidnum[2]={0,0,}, *pdebug;
+  uint8_t vidnum[2]={0,0}, *pdebug;
 #if BOARD
   uint8_t vidseq[2]={1,1};
   unsigned blocknums[FEC_N-FEC_K]; for(uint8_t i=0; i<(FEC_N-FEC_K); i++) blocknums[i]=(i+FEC_K);
@@ -55,10 +56,11 @@ int main(void)
   uint8_t *sdbuf, k_out = 0, idx = 0;
   int8_t k_in[2]={-1,-1};
   uint16_t sdlen;
+
   bool display=false,reset=false;
-  const uint8_t vidblksize = (2 * (1 + FEC_N));
-  wfb_utils_rawmsg_t *vidblk[rawmsgnb][ vidblksize ], *prawmsg;
-  memset(vidblk, 0, rawmsgnb * vidblksize * sizeof(wfb_utils_rawmsg_t *) );
+  const uint8_t vidblksize = (1 + FEC_N);
+  wfb_utils_rawmsg_t *vidblk[2][ vidblksize ], *prawmsg;
+  memset(vidblk, 0, 2 * vidblksize * sizeof(wfb_utils_rawmsg_t *) );
 #endif // BOARD
        
   wfb_utils_stat_t wfbstat;
@@ -171,39 +173,49 @@ int main(void)
                       if (vidseq[devout - VID1_FD] == 0) vidseq[devout - VID1_FD] = wfb_utils_pay.seq;
 		      if (vidseq[devout - VID1_FD] == wfb_utils_pay.seq) {
 		        vidblk[devout - VID1_FD][wfb_utils_pay.fec] = &rawmsg[devcpt - RAW0_FD][ rawcur ];
+/*
+		        printf("vidseq[%d]=(%d) set vidblk[%d][%d] rawmsg[%d](%d] (%p)\n",devout - VID1_FD, vidseq[devout - VID1_FD], 
+				devout - VID1_FD,wfb_utils_pay.fec,devcpt - RAW0_FD,rawcur,vidblk[devout - VID1_FD][wfb_utils_pay.fec]);
+*/
 		      } else {
 		        if (failseq < 0) k_in[devout - VID1_FD] = FEC_K;
 			else {
                           uint8_t j=FEC_K;
   			  idx = 0;
                           for (uint8_t k=0;k<FEC_K;k++) {
+                            index[k] = 0;
+                            inblocks[k] = (uint8_t *)0;
+			    if (k < (FEC_N - FEC_K)) outblocks[k] = (uint8_t *)0;
                             if (vidblk[devout - VID1_FD][k]) {
                               inblocks[k] = (uint8_t *)vidblk[devout - VID1_FD][k]->headvecs.head[wfb_utils_datapos].iov_base;
                               index[k] = k;
     			    } else {
-                              if (idx == (FEC_N-FEC_K)) break;
-                              while (( j < FEC_N ) && !(vidblk[devout - VID1_FD][j])) j++;
-                              inblocks[k] = (uint8_t *)vidblk[devout - VID1_FD][j]->headvecs.head[wfb_utils_datapos].iov_base;
-                              outblocks[idx] = &outblocksbuf[idx][0]; idx++;
-                              index[k] = j;
-    			      j++;
+                              for(;j < FEC_N; j++) {
+                                if (vidblk[devout - VID1_FD][j]) {
+                                  inblocks[k] = (uint8_t *)vidblk[devout - VID1_FD][j]->headvecs.head[wfb_utils_datapos].iov_base;
+                                  outblocks[idx] = &outblocksbuf[idx][0]; idx++;
+                                  index[k] = j;
+				  j++;
+				  break;
+				}
+			      }
     			    }
     			  }
-
-//			  printf("idx(%d)\n",idx);
-
   			  if ((idx > 0)&&(idx < (FEC_N - FEC_K))) {
   			    k_in[devout - VID1_FD] = k_in[devout - VID1_FD] + 1;
-/*  
-  			    printf("\nDECODE (%d) ",idx);
-                            for (uint8_t k=0;k<FEC_K;k++) printf("[%d]",index[k]);
-                            printf("\n");
- */ 
-      	                    fec_decode(fec_p,
-      			      (const gf*restrict const*restrict const)inblocks,
-      			      (gf*restrict const*restrict const)outblocks,
-      			      (const unsigned*restrict const)index, 
-      			      ONLINE_MTU);
+
+                            bool alldata=true;
+			    for (uint8_t k=1;k<FEC_K;k++) if(index[k] == 0) alldata=false;
+  			    printf("\nDECODE (%d)(%d) ",idx,alldata);
+
+			    if (alldata) {
+
+      	                      fec_decode(fec_p,
+      			        (const gf*restrict const*restrict const)inblocks,
+      			        (gf*restrict const*restrict const)outblocks,
+      			        (const unsigned*restrict const)index, 
+      			        ONLINE_MTU);
+			    }
   			  } else k_in[devout - VID1_FD] = FEC_K;
 			}
   			display = true;
@@ -258,11 +270,11 @@ int main(void)
                         reset = false;
 			failseq = -1;
 			vidseq[devout - VID1_FD] = wfb_utils_pay.seq;
-			memset(&vidblk[devout - VID1_FD][0],0,vidblksize);
+                        memset(&vidblk[devout - VID1_FD][0], 0, vidblksize * sizeof(wfb_utils_rawmsg_t *) );
                         vidblk[devout - VID1_FD][0] = &rawmsg[devcpt - RAW0_FD][ rawcur ];
 		      }
 
-		      if (rawcur == (vidblksize-1)) rawcur=0;
+		      if (rawcur == (rawmsgstoresize - 1)) rawcur=0;
 		      else rawcur++;
 		      break;
 
