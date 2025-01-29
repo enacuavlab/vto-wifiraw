@@ -40,6 +40,9 @@ struct iovec wfb_utils_pay_vec = { .iov_base = &wfb_utils_pay, .iov_len = sizeof
 
 wfb_utils_down_t wfb_utils_down[2];
 
+
+uint8_t debbuf[12][ONLINE_MTU], debidx = 0;
+
 /*****************************************************************************/
 void sock_init(wfb_utils_init_t *p, dir_t dir){
   struct sockaddr_in addr;
@@ -248,7 +251,6 @@ void wfb_utils_presetrawmsg(wfb_utils_rawmsg_t *msg, ssize_t bufsize, bool rxfla
 
 /*****************************************************************************/
 void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, struct iovec *downmsg[2],  wfb_utils_stat_t *pstat) {
-  struct iovec *ptrmsg;
   uint8_t template[]="(%d)(%d) devraw(%d) fails(%d) incom(%d) NbBytes(snd/rcv)\
   [%d](%d)(%d) [%d](%d)(%d) [%d](%d)(%d) [%d](%d)(%d) [%d](%d)(%d)\n";
   plog->len += sprintf((char *)plog->txt + plog->len, (char *)template, 
@@ -273,7 +275,7 @@ void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, struct iovec *downmsg
     memset(&pstat->stat[1].dev, 0, sizeof(pstat->stat[1].dev));
 
 #if BOARD
-
+  struct iovec *ptrmsg;
   if (pstat->raw[1] >= 0) {	  
     if (pstat->stat[ pstat->raw[0] ].incoming > 0) {
       if (pstat->stat[ pstat->raw[0] ].incoming > pstat->stat[ pstat->raw[1] ].incoming) {
@@ -370,3 +372,184 @@ void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, struct iovec *downmsg
   plog->len = 0;
 }
 
+#if BOARD
+#else
+/*****************************************************************************/
+void wfb_utils_dispatchvideo(wfb_utils_init_t *sock, stream_t *pstat, wfb_utils_rawmsg_t *pmsg, wfb_utils_dispatchvideo_t *pdspvid, fec_t *fec_p) {
+  ssize_t len = 0;
+  bool nextseq=false, display=false,reset=false;
+  uint8_t k_out = 0, idx = 0, outblocksbuf[FEC_N-FEC_K][ONLINE_MTU];
+  uint8_t *pdebug;
+
+
+  // DEBUG
+/*
+  if (rand() < (0.1 * ((double)RAND_MAX + 1.0))) { 
+    memset(debbuf[debidx], 0, ONLINE_MTU);
+    memcpy(debbuf[debidx], (uint8_t *)pmsg->headvecs.head[wfb_utils_datapos].iov_base, pmsg->headvecs.head[wfb_utils_datapos].iov_len);
+    memset((uint8_t *)pmsg->headvecs.head[wfb_utils_datapos].iov_base, 0, pmsg->headvecs.head[wfb_utils_datapos].iov_len);
+    printf("\nCleared\n");
+    fflush(stdout);
+    return(0);
+  } 
+  if (wfb_utils_pay.fec == 1) return(0);
+  if (wfb_utils_pay.fec == 3) return(0);
+  if (wfb_utils_pay.fec == 5) return(0);
+  if (wfb_utils_pay.fec == 7) return(0);
+*/
+
+
+  if (pdspvid->seq < 0) {pdspvid->prevseq = 0; pdspvid->seq = wfb_utils_pay.seq; pdspvid->fec = wfb_utils_pay.fec; }
+  else  {
+    uint8_t dum = (1 + pdspvid->fec); if (dum == FEC_N) pdspvid->fec = 0;  else pdspvid->fec = dum;
+    if (pdspvid->fec == 0) {
+      dum = (1 + pdspvid->seq); if (dum == 255) pdspvid->seq = 0;  else pdspvid->seq = dum;
+    }
+    if ((pdspvid->recfec < 0) && ((pdspvid->seq != wfb_utils_pay.seq) || (pdspvid->fec != wfb_utils_pay.fec))) {
+      pdspvid->recseq = pdspvid->seq; pdspvid->recfec = pdspvid->fec;
+    }
+    pdspvid->seq = wfb_utils_pay.seq; pdspvid->fec = wfb_utils_pay.fec;
+
+    if (pdspvid->prevseq != wfb_utils_pay.seq) { pdspvid->prevseq = wfb_utils_pay.seq; nextseq=true; }
+  }
+  pmsg->headvecs.head[wfb_utils_datapos].iov_len = wfb_utils_pay.msglen;
+/*
+  pdebug = (uint8_t *)pmsg->headvecs.head[wfb_utils_datapos].iov_base;
+  printf("\nreadmsg recorded seq[%d)  num[%d] seq(%d) fec(%d) %02X[%ld]%02X\n",pdspvid->seq,
+	  wfb_utils_pay.num,wfb_utils_pay.seq,wfb_utils_pay.fec,
+          *(16 + pdebug),
+          pmsg->headvecs.head[wfb_utils_datapos].iov_len,
+          *(pmsg->headvecs.head[wfb_utils_datapos].iov_len + pdebug - 1));
+*/
+  uint8_t *outblocks[FEC_N-FEC_K];
+  if (!nextseq) {
+    pdspvid->blk[wfb_utils_pay.fec] = pmsg;
+    if (wfb_utils_pay.fec < FEC_K) { 
+      if (pdspvid->recfec < 0) {
+        pdspvid->k_in = wfb_utils_pay.fec; k_out = (wfb_utils_pay.fec + 1);
+        display = true;
+      } else {
+	display = false;
+      }
+    }
+  } else {
+    if (pdspvid->recfec < 0) {
+      display = true; reset = true;
+      pdspvid->k_in = FEC_N;
+      pdspvid->blk[FEC_N] = pmsg;
+      k_out = 1 + FEC_N;
+    } else {
+      if (! ((0 <= pdspvid->recfec ) && ( pdspvid->recfec < FEC_K))) { 
+        reset = true;  display = true;  
+        pdspvid->k_in = FEC_N;
+        pdspvid->blk[FEC_N] = pmsg;
+        k_out = 1 + FEC_N;
+      } else {
+        if ((pdspvid->recfec == 0) && (pdspvid->recseq == wfb_utils_pay.seq)) reset = true;
+	else {
+          display = true; reset = true;
+          unsigned index[FEC_K];
+          uint8_t *inblocks[FEC_K];
+          uint8_t  alldata=0;
+          uint8_t j=FEC_K;
+          idx = 0;
+          for (uint8_t k=0;k<FEC_K;k++) {
+            index[k] = 0;
+            inblocks[k] = (uint8_t *)0;
+            if (k < (FEC_N - FEC_K)) outblocks[k] = (uint8_t *)0;
+            if ( pdspvid->blk[k] ) {
+              inblocks[k] = (uint8_t *)pdspvid->blk[k]->headvecs.head[wfb_utils_datapos].iov_base;
+              index[k] = k;
+              alldata |= (1 << k);
+            } else {
+              for(;j < FEC_N; j++) {
+                if ( pdspvid->blk[j] ) {
+                  inblocks[k] = (uint8_t *)pdspvid->blk[j]->headvecs.head[wfb_utils_datapos].iov_base;
+                  outblocks[idx] = &outblocksbuf[idx][0]; idx++;
+                  index[k] = j;
+                  j++;
+      	          alldata |= (1 << k);
+      	          break;
+      	        }
+      	      }
+            }
+          }
+/*
+          printf("seq(%d) alldata (%d) idx(%d)\n",wfb_utils_pay.seq,alldata,idx);
+*/
+          if ((alldata == 255)&&(idx > 0)&&(idx <= (FEC_N - FEC_K))) {
+            pdspvid->k_in = pdspvid->recfec;
+/*
+            for (uint8_t k=0;k<FEC_K;k++) printf("%d ",index[k]);
+            printf("\nDECODE (%d)\n",idx);
+*/
+            fec_decode(fec_p,
+              (const gf*restrict const*restrict const)inblocks,
+              (gf*restrict const*restrict const)outblocks,
+              (const unsigned*restrict const)index, 
+              ONLINE_MTU);
+	    if (wfb_utils_pay.fec == 0) {
+              pdspvid->blk[FEC_K] = pmsg;
+              k_out = 1 + FEC_K;
+	    } else k_out = FEC_K;
+	  } else {
+            outblocks[0] = (uint8_t *)0;
+            pdspvid->k_in = 1 + pdspvid->recfec;
+            pdspvid->blk[FEC_K] = pmsg;
+            k_out = 1 + FEC_K;
+	  }
+	}
+      }
+    }
+  }
+
+  if (display) {
+    wfb_utils_rawmsg_t *prawmsg;
+    uint8_t *sdbuf;
+    uint16_t sdlen;
+    idx=0;
+    for (uint8_t k = pdspvid->k_in; k < k_out; k++) {
+      sdbuf = 0;
+      if (pdspvid->recfec < 0) {
+        sdbuf = (uint8_t *)(pmsg->headvecs.head[wfb_utils_datapos].iov_base) + sizeof(wfb_utils_fec_t); 
+        sdlen = pmsg->headvecs.head[wfb_utils_datapos].iov_len - sizeof(wfb_utils_fec_t); 
+      } else{
+        prawmsg = pdspvid->blk[k];
+        if (prawmsg) {
+          sdbuf = (uint8_t *)(prawmsg->headvecs.head[wfb_utils_datapos].iov_base) + sizeof(wfb_utils_fec_t); 
+          sdlen = (prawmsg->headvecs.head[wfb_utils_datapos].iov_len) - sizeof(wfb_utils_fec_t); 
+        } else {
+          if (outblocks[idx]) {
+            sdlen = ((wfb_utils_fec_t *)&outblocksbuf[idx][0])->feclen;
+            sdbuf = &outblocksbuf[idx][sizeof(wfb_utils_fec_t)];
+	    idx++;
+	  }
+        }
+      }
+      if(sdbuf) {
+        if ((len = sendto(sock->fd, sdbuf, sdlen, MSG_DONTWAIT, (struct sockaddr *)&(sock->addrout), sizeof(struct sockaddr))) > 0) {
+          pstat->rcv += len;
+/*
+	  pdebug = sdbuf;
+          printf("%02X[%ld][%d]%02X ",*(14 + pdebug),
+              len,
+              sdlen,
+              *(sdlen + pdebug - 1)); fflush(stdout);
+*/
+        }
+      }
+    }
+ //   printf("\n");
+  }
+
+  if (reset) {
+/*
+    printf("\nRESET backup(%d)\n",wfb_utils_pay.fec);
+*/
+    memset(pdspvid->blk, 0, VIDBLKSIZE * sizeof(wfb_utils_rawmsg_t *)); 
+    pdspvid->blk[wfb_utils_pay.fec] = pmsg;
+    if (( pdspvid->recfec >= 0) && (wfb_utils_pay.fec != 0)) { pdspvid->recseq = wfb_utils_pay.seq; pdspvid->recfec = 0; }
+    else if (! ((pdspvid->recfec == 0) && (pdspvid->recseq == wfb_utils_pay.seq))) pdspvid->recfec = -1;
+  }
+}
+#endif // BOARD

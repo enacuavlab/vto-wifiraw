@@ -84,5 +84,21 @@ void wfb_utils_init(wfb_utils_init_t [FD_NB], uint8_t *readcpt, uint8_t readtab[
 void wfb_utils_presetrawmsg(wfb_utils_rawmsg_t *, ssize_t, bool );
 void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, struct iovec *downmsg[2],  wfb_utils_stat_t *pstat);
 
+#if BOARD
+#else
+#include "fec.h"
+#define VIDBLKSIZE 1 + FEC_N
+typedef struct {
+  int16_t seq;
+  int16_t prevseq;
+  int16_t recseq;
+  uint8_t fec;
+  int8_t recfec;
+  int8_t k_in;
+  wfb_utils_rawmsg_t *blk[ VIDBLKSIZE ];
+} wfb_utils_dispatchvideo_t;
+void wfb_utils_dispatchvideo(wfb_utils_init_t *sock, stream_t *pstat, wfb_utils_rawmsg_t *pmsg, wfb_utils_dispatchvideo_t *pdspvid, fec_t *fec_p);
+#endif // BOARD
+
 
 #endif // WFB_UTILS_H

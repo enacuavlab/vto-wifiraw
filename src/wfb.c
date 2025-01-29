@@ -9,7 +9,10 @@
 
 #include "wfb.h"
 #include "wfb_utils.h"
+
+#if BOARD
 #include "fec.h"
+#endif // BOARD
 
 extern wfb_utils_pay_t wfb_utils_pay;
 
@@ -44,30 +47,24 @@ int main(void)
   fec_init();
   fec_t *fec_p = fec_new(FEC_K, FEC_N);
   int16_t numprev[2]={-1,-1};
-  uint8_t vidnum[2]={0,0}, *pdebug;
+  uint8_t *pdebug;
+
 #if BOARD
+  uint8_t vidnum[2]={0,0};
   uint8_t vidseq[2]={1,1};
   unsigned blocknums[FEC_N-FEC_K]; for(uint8_t i=0; i<(FEC_N-FEC_K); i++) blocknums[i]=(i+FEC_K);
   uint8_t *datablocks[FEC_K], *fecblocks[FEC_N-FEC_K];
 #else
-  uint8_t vidseq[2]={0,0};
-  unsigned index[FEC_K];
-  uint8_t outblocksbuf[FEC_N-FEC_K][ONLINE_MTU], *outblocks[FEC_N-FEC_K], *inblocks[FEC_K], vidblkin[rawmsgnb]={0,0};
-  uint8_t *sdbuf, k_out = 0, idx = 0;
-  int8_t k_in[2]={-1,-1};
-  uint16_t sdlen;
-
-  bool display=false,reset=false;
-  const uint8_t vidblksize = (1 + FEC_N);
-  wfb_utils_rawmsg_t *vidblk[2][ vidblksize ], *prawmsg;
-  memset(vidblk, 0, 2 * vidblksize * sizeof(wfb_utils_rawmsg_t *) );
+  wfb_utils_dispatchvideo_t dspvid[2];
+  for (uint8_t i=0; i < 2; i++) { dspvid[i].k_in = 0; dspvid[i].fec = 0; dspvid[i].seq = -1; dspvid[i].recfec = -1; 
+	                          dspvid[i].recseq = 0;
+	                          memset(dspvid[i].blk, 0, VIDBLKSIZE * sizeof(wfb_utils_rawmsg_t *)); }
 #endif // BOARD
        
   wfb_utils_stat_t wfbstat;
   wfb_utils_init_t dev[FD_NB];
   struct pollfd readsets[FD_NB];
-  bool bckup = false, sendflag=false;
-  int16_t failseq = -1;
+  bool bckup = false;
   wfb_utils_init(dev, &readcpt, readtab, readsets, &bckup);
   if (!bckup) wfbstat.raw[0] = 0;
   else {
@@ -142,11 +139,9 @@ int main(void)
 		  if (numprev[devcpt - RAW0_FD] == 255) {
 		    if (wfb_utils_pay.num != 0) {
   		      wfbstat.stat[devcpt - RAW0_FD].fails++;
-  		      failseq = wfb_utils_pay.seq;
 		    }
 		  } else if ((1 + (numprev[devcpt - RAW0_FD])) != wfb_utils_pay.num) {
   		    wfbstat.stat[devcpt - RAW0_FD].fails++;
-  		    failseq = wfb_utils_pay.seq;
   		  } 
   		}
 
@@ -161,123 +156,11 @@ int main(void)
 #else
 		    case VID1_FD:
 		    case VID2_FD:
-                      rawmsg[devcpt - RAW0_FD][rawcur].headvecs.head[wfb_utils_datapos].iov_len = wfb_utils_pay.msglen;
-/*
-                      pdebug = (uint8_t *)rawmsg[devcpt - RAW0_FD][rawcur].headvecs.head[wfb_utils_datapos].iov_base;
-                      printf("\nreadmsg(%d) failseq[%d)  num[%d] seq(%d) fec(%d) %02X[%ld]%02X\n",(devout - VID1_FD),failseq,
-				  wfb_utils_pay.num,wfb_utils_pay.seq,wfb_utils_pay.fec,
-                                  *(16 + pdebug),
-                                  rawmsg[devcpt - RAW0_FD][rawcur].headvecs.head[wfb_utils_datapos].iov_len,
-                                  *(rawmsg[devcpt - RAW0_FD][rawcur].headvecs.head[wfb_utils_datapos].iov_len + pdebug - 1));
-*/
-                      if (vidseq[devout - VID1_FD] == 0) vidseq[devout - VID1_FD] = wfb_utils_pay.seq;
-		      if (vidseq[devout - VID1_FD] == wfb_utils_pay.seq) {
-		        vidblk[devout - VID1_FD][wfb_utils_pay.fec] = &rawmsg[devcpt - RAW0_FD][ rawcur ];
-/*
-		        printf("vidseq[%d]=(%d) set vidblk[%d][%d] rawmsg[%d](%d] (%p)\n",devout - VID1_FD, vidseq[devout - VID1_FD], 
-				devout - VID1_FD,wfb_utils_pay.fec,devcpt - RAW0_FD,rawcur,vidblk[devout - VID1_FD][wfb_utils_pay.fec]);
-*/
-		      } else {
-		        if (failseq < 0) k_in[devout - VID1_FD] = FEC_K;
-			else {
-                          uint8_t j=FEC_K;
-  			  idx = 0;
-                          for (uint8_t k=0;k<FEC_K;k++) {
-                            index[k] = 0;
-                            inblocks[k] = (uint8_t *)0;
-			    if (k < (FEC_N - FEC_K)) outblocks[k] = (uint8_t *)0;
-                            if (vidblk[devout - VID1_FD][k]) {
-                              inblocks[k] = (uint8_t *)vidblk[devout - VID1_FD][k]->headvecs.head[wfb_utils_datapos].iov_base;
-                              index[k] = k;
-    			    } else {
-                              for(;j < FEC_N; j++) {
-                                if (vidblk[devout - VID1_FD][j]) {
-                                  inblocks[k] = (uint8_t *)vidblk[devout - VID1_FD][j]->headvecs.head[wfb_utils_datapos].iov_base;
-                                  outblocks[idx] = &outblocksbuf[idx][0]; idx++;
-                                  index[k] = j;
-				  j++;
-				  break;
-				}
-			      }
-    			    }
-    			  }
-  			  if ((idx > 0)&&(idx < (FEC_N - FEC_K))) {
-  			    k_in[devout - VID1_FD] = k_in[devout - VID1_FD] + 1;
-
-                            bool alldata=true;
-			    for (uint8_t k=1;k<FEC_K;k++) if(index[k] == 0) alldata=false;
-  			    printf("\nDECODE (%d)(%d) ",idx,alldata);
-
-			    if (alldata) {
-
-      	                      fec_decode(fec_p,
-      			        (const gf*restrict const*restrict const)inblocks,
-      			        (gf*restrict const*restrict const)outblocks,
-      			        (const unsigned*restrict const)index, 
-      			        ONLINE_MTU);
-			    }
-  			  } else k_in[devout - VID1_FD] = FEC_K;
-			}
-  			display = true;
-  		        reset = true;
-  			k_out = 1 + FEC_K;
-                        vidblk[devout - VID1_FD][ FEC_K ] = &rawmsg[devcpt - RAW0_FD][ rawcur ];
-		      }
-
-		      if (failseq < 0) {
-		        if (wfb_utils_pay.fec < FEC_K) { 
-                          k_in[devout - VID1_FD] = wfb_utils_pay.fec; k_out = (wfb_utils_pay.fec + 1);
-			  display = true;
-			} else display = false;
-		      }
-
-		      if (display) {
-                        display = false; idx=0;
-  		        for (uint8_t k = k_in[devout - VID1_FD]; k < k_out; k++) {
-                          sdbuf = 0;
-		          if (failseq < 0) {
-			    prawmsg = &rawmsg[devcpt - RAW0_FD][rawcur];
-                            sdbuf = (uint8_t *)(prawmsg->headvecs.head[wfb_utils_datapos].iov_base) + sizeof(wfb_utils_fec_t); 
-                            sdlen = prawmsg->headvecs.head[wfb_utils_datapos].iov_len - sizeof(wfb_utils_fec_t); 
-			  } else{
-			    prawmsg = vidblk[devout - VID1_FD][k];
-                            if (prawmsg) {
-                              sdbuf = (uint8_t *)(prawmsg->headvecs.head[wfb_utils_datapos].iov_base) + sizeof(wfb_utils_fec_t); 
-                              sdlen = (prawmsg->headvecs.head[wfb_utils_datapos].iov_len) - sizeof(wfb_utils_fec_t); 
-			    } else {
-			      sdlen = ((wfb_utils_fec_t *)&outblocksbuf[idx][0])->feclen;
-                              sdbuf = &outblocksbuf[idx][sizeof(wfb_utils_fec_t)];
-			      idx++;
-			    }
-			  }
-			  if(sdbuf) {
-                            if ((len = sendto(dev[devout].fd, sdbuf, sdlen, MSG_DONTWAIT, 
-		                        (struct sockaddr *)&(dev[devout].addrout), sizeof(struct sockaddr))) > 0) {
-                              wfbstat.stat[devcpt - RAW0_FD].dev[devout].rcv += len;
-/*
-			      pdebug = sdbuf;
-                              printf("%02X[%ld][%d]%02X  ",*(14 + pdebug),
-                                  len,
-                                  sdlen,
-                                  *(sdlen + pdebug - 1));
-*/
-			    }
-			  }
-                        }
-		      }
-
-		      if (reset) {
-                        reset = false;
-			failseq = -1;
-			vidseq[devout - VID1_FD] = wfb_utils_pay.seq;
-                        memset(&vidblk[devout - VID1_FD][0], 0, vidblksize * sizeof(wfb_utils_rawmsg_t *) );
-                        vidblk[devout - VID1_FD][0] = &rawmsg[devcpt - RAW0_FD][ rawcur ];
-		      }
-
-		      if (rawcur == (rawmsgstoresize - 1)) rawcur=0;
-		      else rawcur++;
+                      wfb_utils_dispatchvideo(&dev[devout], &(wfbstat.stat[devcpt - RAW0_FD].dev[devout]), 
+				              &rawmsg[devcpt - RAW0_FD][rawcur], &dspvid[devout - VID1_FD], fec_p);
+                      if (rawcur == (rawmsgstoresize - 1)) rawcur=0;
+                      else rawcur++;
 		      break;
-
 
                     case WFB_FD:
                       wfbstat.stat[devcpt - RAW0_FD].incoming++;
@@ -353,7 +236,7 @@ int main(void)
   #endif // RAW
               len = sendmsg(dev[raw + RAW0_FD].fd, &rawmsg[raw][0].msg, MSG_DONTWAIT);
         	      wfbstat.stat[raw].dev[j + WFB_FD].snd += msg[i][j][k].iov_len ;
- /* 
+/*
               pdebug = (uint8_t *)rawmsg[raw][0].headvecs.head[wfb_utils_datapos].iov_base;
               printf("sendmsg num(%d) seq(%d) fec(%d) len(%ld) %02X[%ld]%02X\n",num-1,seq,k,len,
                   *(16 + pdebug),
@@ -374,6 +257,7 @@ int main(void)
 	  }
         }
       }
+//      if (seq==5) exit(-1); DEBUG
     } // end poll
   }
 }
