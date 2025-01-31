@@ -149,9 +149,6 @@ int main(void)
 		devout = WFB_FD + wfb_utils_pay.msgcpt;
 		if (wfb_utils_pay.msglen > 0) {
 		  switch(devout) {
-#if TELEM
-                    case TEL_FD:
-#endif // TELEM
 #if BOARD
 #else
 		    case VID1_FD:
@@ -169,12 +166,25 @@ int main(void)
 		        ((wfb_utils_down_t *)rawmsg[devcpt - RAW0_FD][rawcur].headvecs.head[wfb_utils_datapos].iov_base)->chan;
 	              break;
 #endif // BOARD
+#if TELEM
+                    case TEL_FD:
+#if BOARD
+#else
+		      if ((len = sendto(dev[devout].fd,
+		        rawmsg[devcpt - RAW0_FD][rawcur].headvecs.head[wfb_utils_datapos].iov_base,
+		        wfb_utils_pay.msglen,
+		        MSG_DONTWAIT, (struct sockaddr *)&(dev[devout].addrout), sizeof(struct sockaddr))) > 0) {
+		          wfbstat.stat[devcpt - RAW0_FD].dev[devout].rcv += len;
+		      }
+#endif // BOARD
+#endif // TELEM
                     case TUN_FD:
                       if ((len = write(dev[devout].fd, 
 		        rawmsg[devcpt - RAW0_FD][rawcur].headvecs.head[wfb_utils_datapos].iov_base,
 		        wfb_utils_pay.msglen)) > 0) {
 		          wfbstat.stat[devcpt - RAW0_FD].dev[devout].rcv += len;
 		      }
+
                       break;
 
                     default:
