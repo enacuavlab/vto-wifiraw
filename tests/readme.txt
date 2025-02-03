@@ -28,3 +28,9 @@ libav:  avdec_h264: libav H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 decoder
 libav:  avenc_h264_omx: libav OpenMAX IL H.264 video encoder encoder
 
 gst-launch-1.0 udpsrc port=5600 ! application/x-rtp, encoding-name=H264, payload=96 ! rtph264depay ! h264parse ! queue ! avdec_h264 !  videoconvert ! autovideosink sync=false
+
+
+PPRZ
+----
+socat -u "/dev/ttyS4",raw,echo=0,b115200 udp-sendto:127.0.0.1:4244
+socat -u udp-listen:4245,reuseaddr,fork "/dev/ttyS4",raw,echo=0,b115200 
