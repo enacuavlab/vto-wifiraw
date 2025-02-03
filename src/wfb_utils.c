@@ -329,6 +329,13 @@ void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, struct iovec *downmsg
       }
     }
 
+    if ((pstat->stat[0].incoming > 0) && (pstat->stat[1].incoming > 0)) {
+      if  (pstat->stat[0].chan > 100) {  pstat->raw[0] = 0; pstat->raw[1] = 1; }
+      else {  pstat->raw[0] = 1; pstat->raw[1] = 0; }
+      plog->len += sprintf((char *)plog->txt + plog->len,"main set dev(%d) backup set dev(%d)\n",pstat->raw[0],pstat->raw[1]);
+    }
+
+
     for (uint8_t raw=0; raw < 2; raw++) {
       if ((pstat->stat[raw].incoming > 0) && (pstat->stat[!(raw)].incoming == 0)) {
         if (pstat->stat[raw].chan < 0) {
@@ -343,7 +350,7 @@ void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, struct iovec *downmsg
                                dev[ pstat->raw[1] + RAW0_FD ].raw.freqcptcur);
 	  } else {
 	    pstat->raw[0] = !(raw); pstat->raw[1] = raw; 
-  	    wfb_net_setfreq( pstat->stat[pstat->raw[0]].chan, &dev[ pstat->raw[1] + RAW0_FD ].raw);
+  	    wfb_net_setfreq( pstat->stat[pstat->raw[1]].chan, &dev[ pstat->raw[0] + RAW0_FD ].raw);
             plog->len += sprintf((char *)plog->txt + plog->len,"main switch, backup set dev[%d] chan(%d)\n", pstat->raw[1],
                                dev[ pstat->raw[1] + RAW0_FD ].raw.freqcptcur);
 	  }
@@ -355,7 +362,7 @@ void wfb_utils_periodic(wfb_utils_init_t *dev, bool bckup, struct iovec *downmsg
     if (pstat->raw[0] < 0) {
       wfb_net_incfreq( dev[ 1 + RAW0_FD].raw.freqcptcur, &dev[ 0 + RAW0_FD ].raw ); 
       wfb_net_incfreq( dev[ 0 + RAW0_FD].raw.freqcptcur, &dev[ 1 + RAW0_FD ].raw ); 
-      plog->len += sprintf((char *)plog->txt + plog->len,"devices increment chan (%d (%d)\n",
+      plog->len += sprintf((char *)plog->txt + plog->len,"devices increment chan (%d)(%d)\n",
 			dev[ 0 + RAW0_FD ].raw .freqcptcur, dev[ 1 + RAW0_FD ].raw .freqcptcur);
     }
   }
@@ -380,24 +387,6 @@ void wfb_utils_dispatchvideo(wfb_utils_init_t *sock, stream_t *pstat, wfb_utils_
   bool nextseq=false, display=false,reset=false;
   uint8_t k_out = 0, idx = 0, outblocksbuf[FEC_N-FEC_K][ONLINE_MTU];
   uint8_t *pdebug;
-
-
-  // DEBUG
-/*
-  if (rand() < (0.1 * ((double)RAND_MAX + 1.0))) { 
-    memset(debbuf[debidx], 0, ONLINE_MTU);
-    memcpy(debbuf[debidx], (uint8_t *)pmsg->headvecs.head[wfb_utils_datapos].iov_base, pmsg->headvecs.head[wfb_utils_datapos].iov_len);
-    memset((uint8_t *)pmsg->headvecs.head[wfb_utils_datapos].iov_base, 0, pmsg->headvecs.head[wfb_utils_datapos].iov_len);
-    printf("\nCleared\n");
-    fflush(stdout);
-    return(0);
-  } 
-  if (wfb_utils_pay.fec == 1) return(0);
-  if (wfb_utils_pay.fec == 3) return(0);
-  if (wfb_utils_pay.fec == 5) return(0);
-  if (wfb_utils_pay.fec == 7) return(0);
-*/
-
 
   if (pdspvid->seq < 0) {pdspvid->prevseq = 0; pdspvid->seq = wfb_utils_pay.seq; pdspvid->fec = wfb_utils_pay.fec; }
   else  {
