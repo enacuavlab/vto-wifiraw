@@ -18,8 +18,11 @@ read -p "for this side in $PROJ (y/n) ?" ANSWER
 if [ ! $ANSWER = "y" ] || [ -z $ANSWER ]; then exit -1; fi
 if ! groups | grep -q 'sudo'; then exit -1; fi
 sudo apt-get install -y netcat socat git net-tools wireless-tools rfkill v4l-utils build-essential
+
 cd $PROJ/rtl8812au
-git checkout 63cf0b4
+if uname -a | grep -cs "6.14.0-24-generic"> /dev/null 2>&1; then git checkout V5.6.4.2;
+else git checkout 63cf0b4; fi
+
 #if uname -a | grep -cs "4.9.253-tegra"> /dev/null 2>&1; then git checkout 4ab079f7; fi
 #git apply ../material/rtl8812au_v5.6.4.2.patch
 DKMS=false
