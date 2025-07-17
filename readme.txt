@@ -63,6 +63,9 @@ socat - udp-sendto:5900
 etc ...
 
 ---------------------------------------------------------------------------------
+Deskop must be in "airline mode", to not interfer with wifiraw adapters
+
+---------------------------------------------------------------------------------
 0) How does it works
   Using a specific wireless adapter with injection and monitor capabilities, to build a bidirectionnal link.
   An additional wifi adapter on both ends, enable channel hopping, to avoid occupied frequencies.
@@ -102,6 +105,8 @@ Debian 11.3 (bulleyes) arm64 on Raspberry PI4,3,0V2: Board and Ground
 Ubuntu 20.04 (server+desktop) arm64 on Raspberry PI4 : Ground with Paparazzi
 
 Ubuntu 22.04 (desktop)
+
+Ubuntu 24.04 (desktop) 
 
 Jetpack 4.6 (arm64) on Nvidia Nano and XavierNX:  Board and Ground
 
